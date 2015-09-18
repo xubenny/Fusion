@@ -8,5 +8,117 @@ and open the template in the editor.
     Author     : Benny
 */
 
+#slots {
+    width: 85vw; /* use viewport width to fullfill responsible page */
+    height: 85vw;
+    
+    margin: auto; /* will effect landscape */
+
+    padding-left: 1vw;
+    padding-top: 1vw;
+    border-radius: 5px;
+
+    background: gray;
+    position: relative; /* let children elements follow when screen is changed */
+}
+
+.slot {
+    display: inline-block;
+    background: lightgray;
+    border-radius: 4px;
+
+    width: 19vw;
+    height: 19vw;
+    margin: 1vw 1vw 0 1vw; /*手动调整得到经验值*/
+}
+
+.cube {
+    text-align: center;
+    border-radius: 4px;
+    
+    position: absolute;
+    /* for transition when cube is moving */
+    -webkit-transition:left 0.2s, top 0.2s;
+
+    width: 19vw;
+    height: 19vw;/*大小与.slot保持一致*/
+    margin: 1vw 1vw 0 1vw;
+}
+
+.showCube {
+    /* 方块出现的时候有动画 */
+    -webkit-animation-duration: 0.4s;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-name: 'Showup';
+}
+@-webkit-keyframes Showup {
+    from {
+        -webkit-transform: scale(0.1,0.1);
+    }
+    to {
+        -webkit-transform: scale(1.0,1.0);
+    }
+}
+
+.mergedCube {
+    -webkit-animation-duration: 0.2s;
+    -webkit-animation-iteration-count: 2;
+    -webkit-animation-direction: alternate;
+    -webkit-animation-name: 'MergeCube';
+}
+@-webkit-keyframes MergeCube {
+    to {
+        -webkit-transform: scale(1.1,1.1);
+    }
+}
+
+.number1 {background: Azure; color: black;}
+.number2 {background: snow; color: black;}
+.number4 {background: papayaWhip; color: black;}
+.number8 {background: LightSalmon; color: white;}
+.number16 {background: SandyBrown; color: white;}
+.number32 {background: coral; color: white;}
+.number64 {background: OrangeRed; color: white;}
+.number128 {background: Gold; color: white;}
+.number256 {background: Khaki; color: white;}
+.number512 {background: Orange; color: white;}
+.number1024 {background: GoldenRod; color: white;}
+.number2048 {background: GoldenRod; color: white;}
+.number4096 {background: DarkGreen; color: white;}
+.number8192 {background: Blue; color: white;}
+.number16384 {background: Black; color: white;}
+.number32768 {background: Red; color: white;}
+.number65536 {background: Red; color: white;}
+
+/* one digit */
+.number1, .number2, .number4, .number8 {
+    font-size: 16vw; /*通过viewport width的百分比来定义大小，以实现响应式设计*/
+    line-height: 1.2em;
+}
+
+/* two digits*/
+.number16, .number32, .number64 {
+    font-size: 14vw;
+    line-height: 1.35em;
+}
+
+/* threeDigits */
+.number128, .number256, .number512 {
+    font-size: 11vw;
+    line-height: 1.7em;
+}
+
+/* fourDigits */
+.number1024, .number2048, .number4096, .number8192 {
+    font-size: 8vw;
+    line-height: 2.4em;
+}
+
+/* fiveDigits */
+.number16384, .number32768, .number65536 {
+    font-size: 6vw;
+    line-height: 3.2em;
+}
+
 
 
