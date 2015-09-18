@@ -4,15 +4,12 @@
  * and open the template in the editor.
  * 
  */
-
 var slots;  // store the cube's pointers
 var maxRowCol = 4; // dimension of slots, can be changed by difficulty option
 var initValue = 2;
 
 $(document).ready(function(){
     $(document).on('keydown', keydownHandler);
-
-    $(window).resize(adjustPosition);
 
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
@@ -21,19 +18,6 @@ $(document).ready(function(){
     
     newGame();
 }); // end ready
-
-// put the cube to the right place when window is resized
-function adjustPosition() {
-    for(var row = 0; row < maxRowCol; row++)
-    for(var col = 0; col < maxRowCol; col++) {
-        cube = slots[row][col];
-        if(cube != null) {
-            // reset the cube position
-            cube.css({left: $('.slot').eq(row * maxRowCol + col).position().left,
-                        top: $('.slot').eq(row * maxRowCol + col).position().top});
-        }
-    }
-}
 
 function newGame () {
     // reset slots pointers

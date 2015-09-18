@@ -8,49 +8,6 @@ and open the template in the editor.
     Author     : Benny
 */
 
-#header-wrapper {
-    width: 85vw;
-    margin-top: 3vh;
-    margin-bottom: 2vh;
-    display: inline-block;
-
-    display: -webkit-flex; /* Safari */
-    display: flex;  /* score-title width flexibel fill the middle space between game-title and score */
-}
-
-#game-title {
-    width: 36vw;
-    height: auto;
-}
-/*
-How to draw my game title image:
-1. Create a image with 300*100
-2. Type a text "fusion", font Comic Sans MS, size 100, style Bold, color blue(R63 G157 B212) or orange(R212 G89 B40)
-3. Adjust position, save as title.png
-*/
-
-#score-title {
-    font-size: 3vw;
-    margin-right: 2vw;
-    text-align: right;
-    
-    -webkit-flex: 1;  /* Safari 6.1+ */
-    -ms-flex: 1;  /* IE 10 */    
-    flex: 1;  /* score-title width flexibel fill the middle space between game-title and score */
-}
-
-#score {
-    font-size: 4.5vw;
-    
-    color: green;
-    text-align: right;
-//    border: solid blue;
-}
-
-#score h1 {
-    margin: 1.5vh 0 1.5vh 0; /*调整上下整体对齐*/
-}
-
 #slots {
     width: 85vw; /* use viewport width to fullfill responsible page */
     height: 85vw;
@@ -161,49 +118,4 @@ How to draw my game title image:
 .number16384, .number32768, .number65536 {
     font-size: 6vw;
     line-height: 3.2em;
-}
-
-/*/////////// screen landscape remind //////////////*/
-@media only screen and (orientation : portrait){
-#landscape-wrapper {
-    display: none;
-}
-}
-
-@media only screen and (orientation : landscape){
-#landscape-wrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 20000;
-    
-    background: black;
-    opacity: 0.85;
-}
-
-#landscape-icon img {
-    height: 30vh;
-}
-
-#landscape-icon {
-    margin-top: 30vh;
-    text-align: center;
-}
-
-#landscape-wrapper p {
-    font-size: 5vh;
-    margin: 0;
-    color: white;
-    text-align: center;
-}
-} /*/// end of screen landscape remind ///*/
-
-/*/////// adjust iPad in portrait ////////*/
-@media only screen 
-and (min-device-width : 768px) 
-and (max-device-width : 1024px) 
-and (orientation : portrait){
-#slots {
-    height: 83.3vw; /* ipad在缺省的85vw高时下边会比较粗，需要调整细一点 */
-}
 }
