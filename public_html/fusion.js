@@ -11,6 +11,8 @@ var initValue = 2;
 
 $(document).ready(function(){
     $(document).on('keydown', keydownHandler);
+    $(document).on('touchstart', touchHandler);
+    $(document).on('touchmove', touchHandler);
 
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
@@ -225,3 +227,40 @@ function keydownHandler (key) {
     }
 }
 
+var touchstart = {"x":-1, "y":-1}; 
+var bCauseMove;
+function touchHandler(event) {
+    var touch;
+    touch = event.originalEvent.touches[0];
+    switch (event.type) {
+        case 'touchstart':
+            touchstart.x = touch.pageX;
+            touchstart.y = touch.pageY;
+            bCauseMove = false;
+            break;
+        case 'touchmove':
+            var distanceX = Math.abs(touch.pageX-touchstart.x);
+            var distanceY = Math.abs(touch.pageY-touchstart.y);
+
+            // bCauseMove mean the user's finger movement not cause any movement yet
+            if (!bCauseMove && (distanceX > 50 || distanceY > 50)) {
+                var direction;
+                if(distanceX > distanceY) { // horizonal
+                    if (touch.pageX > touchstart.x)
+                        direction = "Right";
+                    else
+                        direction = "Left";
+                }
+                else { // vertical
+                    if (touch.pageY > touchstart.y)
+                        direction = "Down";
+                    else
+                        direction = "Up";
+                }
+                moveCubes(direction);
+                bCauseMove = true;
+            }            
+            event.preventDefault();
+            break;
+    }
+}
