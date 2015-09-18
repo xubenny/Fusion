@@ -196,6 +196,11 @@ function upgrade(cube) {
     // upgrade style
     cube.addClass("number" + value);
     cube.addClass("mergedCube");
+
+    // refresh score
+    var score = parseInt($("#score").text());
+    score+= value/initValue;
+    $("#score").html('<h1>' + score + '</h1>');
 }
 
 
