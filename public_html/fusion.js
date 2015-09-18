@@ -14,6 +14,8 @@ $(document).ready(function(){
     $(document).on('touchstart', touchHandler);
     $(document).on('touchmove', touchHandler);
 
+    $(window).resize(adjustPosition);
+
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
      for(var row = 0; row < 6; row++)
@@ -21,6 +23,19 @@ $(document).ready(function(){
     
     newGame();
 }); // end ready
+
+// put the cube to the right place when window is resized
+function adjustPosition() {
+    for(var row = 0; row < maxRowCol; row++)
+    for(var col = 0; col < maxRowCol; col++) {
+        cube = slots[row][col];
+        if(cube != null) {
+            // reset the cube position
+            cube.css({left: $('.slot').eq(row * maxRowCol + col).position().left,
+                        top: $('.slot').eq(row * maxRowCol + col).position().top});
+        }
+    }
+}
 
 function newGame () {
     // reset slots pointers
