@@ -10,6 +10,8 @@ var initValue = 2;
 var cubeStyle;
 var soundSwitch;
 
+var moves;  // store movement used for rewind
+
 
 $(document).ready(function(){
     $(document).on('keydown', keydownHandler);
@@ -152,6 +154,9 @@ function newGame () {
     // remove all slots
     $(".slot").remove();
 
+    // empty movements record
+    moves = [];
+
     // reset style sheet
     switch (maxRowCol) {
     case 4:
@@ -206,6 +211,11 @@ function createCube(){
                 var slottop = $('.slot').eq(row * maxRowCol + col).position().top;
                 cube.css({left: slotleft, top: slottop});  // set position
                 
+                // record for rewind
+                cube.data("action", "created");
+                cube.data("originRow", row);
+                cube.data("originCol", col);
+                
                 $("#slots").append(cube);
                 slots[row][col] = cube;
 
@@ -238,6 +248,12 @@ function moveCubes(direction) {
                 cube.removeClass("showCube");
             if (cube.hasClass("mergedCube"))
                 cube.removeClass("mergedCube");
+            
+            // reset status for next move
+            // is OK even if there will be not a actual move
+            cube.data("originRow", row);
+            cube.data("originCol", col);
+            cube.data("action", "stay");
         }
     }
     
@@ -267,6 +283,35 @@ function moveCubes(direction) {
     
     if(bMoved) {
         createCube();
+
+        // record the snapshot, for play back
+        var cubes = new Array();
+        for(row=0; row<maxRowCol; row++) {
+            cubes[row] = new Array();
+            for(col=0; col<maxRowCol; col++) {
+                cubes[row][col] = null;
+                cube = slots[row][col];
+                
+                if (cube != null) {
+                    cubes[row][col] = {
+                        "action": cube.data("action"),
+                        "originRow": cube.data("originRow"),
+                        "originCol": cube.data("originCol"),
+                        "siblingOriginRow": cube.data("siblingOriginRow"),
+                        "siblingOriginCol": cube.data("siblingOriginCol")
+                    };
+                }
+            }
+        }  // end for
+
+        // save movements for at most 10 times
+        if (moves.length >= 10)
+            moves.shift();  // abandon the earliest one
+        moves.push({
+            "direction": direction,
+            "cubes": cubes
+        });
+        
         // play the sound coresponding to the largest number be upgraded
         if (soundSwitch == "on")
             document.getElementById('upgrade-sound' + upgradeNumber).play();
@@ -314,6 +359,8 @@ function moveCube(row, col, direction) {
         cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
                   top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
               
+        cube.data("action", "moved"); // record for rewind
+
         // continue move to same direction, use recursive method
         moveCube(newRow, newCol, direction);
         bMoved = true;
@@ -326,6 +373,10 @@ function moveCube(row, col, direction) {
     }
     // merge with next cube
     else {
+        cube.data("action", "merged"); // record for rewind
+        cube.data("siblingOriginRow", slots[newRow][newCol].data("originRow")); // record the sibling's origin position before kill him
+        cube.data("siblingOriginCol", slots[newRow][newCol].data("originCol"));
+
         slots[newRow][newCol].remove();
         slots[newRow][newCol] = cube;
         slots[row][col] = null;
@@ -373,7 +424,122 @@ function upgrade(cube) {
         upgradeNumber = value/2/initValue;
 }
 
+function reviveGame(oneStep) {
+    if (moves.length == 0) // check is there any movement records
+        return;
 
+    var move = moves.pop();
+    switch (move.direction)
+    {
+        case "Left":
+            for(var col=maxRowCol-1; col>=0; col--)
+                for(var row=0; row<maxRowCol; row++)
+                    rewindCube(row, col, move.cubes[row][col]);
+            break;
+        case "Right":
+            for(var col=0; col<maxRowCol; col++)
+                for(var row=0; row<maxRowCol; row++)
+                    rewindCube(row, col, move.cubes[row][col]);
+            break;
+        case "Up":
+            for(var row=maxRowCol-1; row>=0; row--)
+                for(var col=0; col<maxRowCol; col++)
+                    rewindCube(row, col, move.cubes[row][col]);
+            break;
+        case "Down":
+            for(var row=0; row<maxRowCol; row++)
+                for(var col=0; col<maxRowCol; col++)
+                    rewindCube(row, col, move.cubes[row][col]);
+            break;
+    }
+
+    if(oneStep)
+        return;
+    
+    if (moves.length > 0)
+        setTimeout(function (){
+            reviveGame();
+        }, 500);
+}
+
+function rewindCube(row, col, cubeAction) {
+
+    var cube = slots[row][col];
+
+    // empty cube
+    if (cube === null)
+        return;
+    
+    // just remove it if it has just been created
+    switch (cubeAction.action) {
+        case "created":
+            cube.remove();
+            slots[row][col] = null;
+            break;
+        case "moved":
+            var newRow = cubeAction.originRow;
+            var newCol = cubeAction.originCol;
+            slots[newRow][newCol] = cube;
+            slots[row][col] = null;
+            cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
+                      top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
+            break;
+        case "merged":
+            // move the merger to origin position
+            var newRow = cubeAction.originRow;
+            var newCol = cubeAction.originCol;
+            downgrade(cube);
+
+            // clone the cube which is merged, then move to the sibling origin position
+            var siblingCube = cube.clone();
+            siblingCube.data("value", cube.data("value"));
+            siblingCube.appendTo("#slots");
+            
+            var siblingRow = cubeAction.siblingOriginRow;
+            var siblingCol = cubeAction.siblingOriginCol;
+            
+            // move back merger
+            slots[newRow][newCol] = cube;
+            cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
+                      top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
+            
+            // move back sibling
+            slots[row][col] = null;
+            slots[siblingRow][siblingCol] = siblingCube;
+            siblingCube.css({left: $('.slot').eq(siblingRow * maxRowCol + siblingCol).position().left,
+                      top: $('.slot').eq(siblingRow * maxRowCol + siblingCol).position().top});
+            break;
+    }
+
+}
+
+function downgrade(cube) {
+    value = cube.data("value");
+    cube.removeClass("number" + value);
+    
+    // downgrade data
+    value /= 2;
+    cube.data("value", value);
+
+    // downgrade outlook
+    switch (cubeStyle) {
+        case "number":
+            cube.text(value);
+            break;
+        case "symbol":
+            var fileName = "image/" + value + ".png";
+            cube.children().attr("src", fileName);
+            break;
+    }
+
+    // downgrade style
+    cube.addClass("number" + value);
+
+    // refresh score
+    var score = parseInt($("#score").text());
+    score -= value*2/initValue;
+    $("#score").html('<h1>' + score + '</h1>');
+}
 
 function keydownHandler (key) {
     switch (key.which){
