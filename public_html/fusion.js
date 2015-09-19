@@ -53,6 +53,53 @@ $(document).ready(function(){
         setSoundOnOff($(this).val());
     });
 
+    // click new game  or revive game button which in page two after game over
+    // or click new game or load game button which in page three after game over
+    // the style sheet will be not ready if I invoke newGame() here, (the slots position left and top will be -7)
+    // so I just mark here, and handle it in main-page change event
+    $(".game-action-btn").click(function() {
+        mainPageAction = $(this).children().text();
+    });
+    
+    // click score title can earn one step rewind
+    // it's a trick for mobile phone user
+    $("#score-title").click(function() {
+       reviveGame(true); 
+    });
+    
+    // new or revive game when page change from game over page to main page
+    $("body").pagecontainer({
+        change: function(event, ui) {
+            if(ui.toPage[0].id != "main-page")
+                return;
+
+            switch (mainPageAction) {
+                case "new game":
+                    newGame();
+                    break;
+                case "revive game":
+                    $("#rewind-wrapper").show();
+                    // turn off user input while rewinding cubes
+                    $(document).off('touchstart', touchHandler);
+                    $(document).off('touchmove', touchHandler);
+                    $(document).off('keydown', keydownHandler);
+
+                    reviveGame(false);  // false mean not only one step, but all
+                    
+                    // turn on user input after rewinding finish
+                    setTimeout( function() {
+                        $("#rewind-wrapper").hide();
+                        $(document).on('touchstart', touchHandler);
+                        $(document).on('touchmove', touchHandler);
+                        $(document).on('keydown', keydownHandler);
+                    }, 4000);
+                    break;
+            }
+            mainPageAction = "none";
+        }
+    });
+
+    ///////////// initial global constant /////////////
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
      for(var row = 0; row < 6; row++)
@@ -312,10 +359,33 @@ function moveCubes(direction) {
             "cubes": cubes
         });
         
+        if(gameWillOver()) {
+            $("#game-over-score h1").text($("#score").text());
+            setTimeout(function (){ // should give some time to user before tell him game over
+                $("body").pagecontainer("change", "#game-over-page", {changeHash: false});
+            }, 1000);
+        }
         // play the sound coresponding to the largest number be upgraded
         if (soundSwitch == "on")
             document.getElementById('upgrade-sound' + upgradeNumber).play();
     }
+}
+
+function gameWillOver() {
+    if ($(".cube").length < maxRowCol * maxRowCol)
+        return false;
+    
+    // not dead yet if there are two same neighbours
+    for (row=0; row<maxRowCol; row++)
+    for (col=0; col<maxRowCol-1; col++)
+        if(slots[row][col].data("value") == slots[row][col+1].data("value"))
+            return false;
+    for (col=0; col<maxRowCol; col++)
+    for (row=0; row<maxRowCol-1; row++)
+        if(slots[row][col].data("value") == slots[row+1][col].data("value"))
+            return false;
+
+    return true;
 }
 
 function moveCube(row, col, direction) {

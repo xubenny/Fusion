@@ -74,7 +74,6 @@ How to draw my game title image:
     
     color: green;
     text-align: right;
-//    border: solid blue;
 }
 
 #score h1 {
@@ -218,4 +217,47 @@ and (orientation : portrait){
 .panel-form label img { width: 1em;}
 .switch .ui-slider-switch { width: 6.5em !important }
 .ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
+
+
+/*//////// game over page style ////////*/
+.game-action-title {
+    text-align: center;
+    height: 5em;
+    color: goldenrod;
+}
+
+#game-over-score {
+    text-align: center;
+    height: 5em;
+}
+
+#game-over-score h1, #game-over-score h2 {
+    display: inline;
+    margin: 0.2em;
+}
+
+.game-action-btn .ui-btn {
+    font-size: 2em;
+//    color: yellow;
+}
+
+/*//////// revive page style ////////*/
+#rewind-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    
+    background: black;
+    opacity: 0.6;
+    font-size: 4vh;
+    text-align: center;
+    color: white;
+    
+    display: none;
+}
+
+#rewind-wrapper p {
+    margin-top: 33vh;
+}
 
