@@ -4,7 +4,6 @@
  * and open the template in the editor.
  * 
  */
-
 var slots;  // store the cube's pointers
 var maxRowCol = 4; // dimension of slots, can be changed by difficulty option
 var initValue = 2;
