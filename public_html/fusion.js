@@ -10,6 +10,27 @@ var initValue = 2;
 
 $(document).ready(function(){
     $(document).on('keydown', keydownHandler);
+    $(document).on('touchstart', touchHandler);
+    $(document).on('touchmove', touchHandler);
+
+    $(window).resize(adjustPosition);
+
+    // change the arrow when menu has been open or close
+    $("#menu-panel" ).panel({
+        open: function() {$("#menu-handle-img").attr("src", "image/swipe-left.png");}
+    });
+    $("#menu-panel" ).panel({
+        close: function() {$("#menu-handle-img").attr("src", "image/swipe-right.png");}
+    }); 
+    
+    // click difficulty radio button
+    $("input[name='radio-difficulty']").change(function() {
+        maxRowCol = parseInt($(this).val());
+        $("#menu-panel" ).panel("close");
+        newGame();
+    });
+
+
 
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
@@ -19,15 +40,49 @@ $(document).ready(function(){
     newGame();
 }); // end ready
 
+// put the cube to the right place when window is resized
+function adjustPosition() {
+    for(var row = 0; row < maxRowCol; row++)
+    for(var col = 0; col < maxRowCol; col++) {
+        cube = slots[row][col];
+        if(cube != null) {
+            // reset the cube position
+            cube.css({left: $('.slot').eq(row * maxRowCol + col).position().left,
+                        top: $('.slot').eq(row * maxRowCol + col).position().top});
+        }
+    }
+}
+
 function newGame () {
     // reset slots pointers
     for(row = 0; row < maxRowCol; row++)
     for(col = 0; col < maxRowCol; col++)
         slots[row][col] = null;
 
+    // remove all cubes
+    $(".cube").remove();
+
+    // remove all slots
+    $(".slot").remove();
+
+    // reset style sheet
+    switch (maxRowCol) {
+    case 4:
+        $("#5x5style").attr('disabled', true);
+        $("#4x4style").attr('disabled', false);
+        break;
+    case 5:
+        $("#4x4style").attr('disabled', true);
+        $("#5x5style").attr('disabled', false);
+        break;
+    }    
+
     // create slots to contain the cubes
     for (i=0; i< maxRowCol*maxRowCol; i++)
         $("#slots").append("<div class='slot'></div>");
+
+    // reset score
+    $("#score").html('<h1>0</h1>');
 
     // start a new game
     createCube();
@@ -224,3 +279,40 @@ function keydownHandler (key) {
     }
 }
 
+var touchstart = {"x":-1, "y":-1}; 
+var bCauseMove;
+function touchHandler(event) {
+    var touch;
+    touch = event.originalEvent.touches[0];
+    switch (event.type) {
+        case 'touchstart':
+            touchstart.x = touch.pageX;
+            touchstart.y = touch.pageY;
+            bCauseMove = false;
+            break;
+        case 'touchmove':
+            var distanceX = Math.abs(touch.pageX-touchstart.x);
+            var distanceY = Math.abs(touch.pageY-touchstart.y);
+
+            // bCauseMove mean the user's finger movement not cause any movement yet
+            if (!bCauseMove && (distanceX > 50 || distanceY > 50)) {
+                var direction;
+                if(distanceX > distanceY) { // horizonal
+                    if (touch.pageX > touchstart.x)
+                        direction = "Right";
+                    else
+                        direction = "Left";
+                }
+                else { // vertical
+                    if (touch.pageY > touchstart.y)
+                        direction = "Down";
+                    else
+                        direction = "Up";
+                }
+                moveCubes(direction);
+                bCauseMove = true;
+            }            
+            event.preventDefault();
+            break;
+    }
+}

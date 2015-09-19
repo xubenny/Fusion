@@ -8,6 +8,84 @@ and open the template in the editor.
     Author     : Benny
 */
 
+#main-content {
+    padding: 0; /* there is padding default，which will cause a gap between the handle and left side edge */
+}
+
+/* menu handle occupy the whole left side. title and slots will float at its right side */
+#menu-handle {
+    height: 100vh;
+    float: left;
+}
+
+/* How to draw a menu handle image：
+1. Create a 60*300 image by pixlr;
+2. Draw a right half round retangle, border color black, border size 5, fill shape with white, radius 100;
+3. Draw a inner half round retangle, no border, fill shape with color(R212 G141 B59), radius 100
+4. Create another layer
+5. Draw 2 lines, color black, size 12, one is from (42,150) to (17,123), another is from (42,150) to (17,177)
+6. Draw 2 lines, color white, size 6, one is from (42,150) to (17,123), another is from (42,150) to (17,177)
+7. Save this canvas as swipe-right.png, with transparent.
+8. Flip the lines layer
+9. Save this canvas as swipe-left.png, with transparent.
+*/
+
+#menu-handle-img {
+    padding: 0; /* no gap between handle and screen left side*/
+    width: 6vw;
+    margin-top: 36vh; /* vertical middle*/
+    margin-right: 2.5vw;/* reasonable space with slots */
+}
+
+
+#header-wrapper {
+    width: 85vw;
+    margin-top: 3vh;
+    margin-bottom: 2vh;
+    display: inline-block;
+
+    display: -webkit-flex; /* Safari */
+    display: flex;  /* score-title width flexibel fill the middle space between game-title and score */
+}
+
+#game-title {
+    width: 36vw;
+    height: auto;
+}
+/*
+How to draw my game title image:
+1. Create a image with 300*100
+2. Type a text "fusion", font Comic Sans MS, size 100, style Bold, color blue(R63 G157 B212) or orange(R212 G89 B40)
+3. Adjust position, save as title.png
+*/
+
+#score-title {
+    font-size: 3vw;
+    margin-right: 2vw;
+    text-align: right;
+    
+    -webkit-flex: 1;  /* Safari 6.1+ */
+    -ms-flex: 1;  /* IE 10 */    
+    flex: 1;  /* score-title width flexibel fill the middle space between game-title and score */
+}
+
+#score {
+    font-size: 4.5vw;
+    
+    color: green;
+    text-align: right;
+//    border: solid blue;
+}
+
+#score h1 {
+    margin: 1.5vh 0 1.5vh 0; /*调整上下整体对齐*/
+}
+
+#slots-wrapper {
+    margin-top: 3vh;
+    display: inline-block; /*让游戏区浮在menu-handle右边*/
+}
+
 #slots {
     width: 85vw; /* use viewport width to fullfill responsible page */
     height: 85vw;
@@ -26,10 +104,6 @@ and open the template in the editor.
     display: inline-block;
     background: lightgray;
     border-radius: 4px;
-
-    width: 19vw;
-    height: 19vw;
-    margin: 1vw 1vw 0 1vw; /*手动调整得到经验值*/
 }
 
 .cube {
@@ -39,10 +113,6 @@ and open the template in the editor.
     position: absolute;
     /* for transition when cube is moving */
     -webkit-transition:left 0.2s, top 0.2s;
-
-    width: 19vw;
-    height: 19vw;/*大小与.slot保持一致*/
-    margin: 1vw 1vw 0 1vw;
 }
 
 .showCube {
@@ -90,32 +160,57 @@ and open the template in the editor.
 .number32768 {background: Red; color: white;}
 .number65536 {background: Red; color: white;}
 
-/* one digit */
-.number1, .number2, .number4, .number8 {
-    font-size: 16vw; /*通过viewport width的百分比来定义大小，以实现响应式设计*/
-    line-height: 1.2em;
+/*/////////// screen landscape remind //////////////*/
+@media only screen and (orientation : portrait){
+#landscape-wrapper {
+    display: none;
+}
 }
 
-/* two digits*/
-.number16, .number32, .number64 {
-    font-size: 14vw;
-    line-height: 1.35em;
+@media only screen and (orientation : landscape){
+#landscape-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 20000;
+    
+    background: black;
+    opacity: 0.85;
 }
 
-/* threeDigits */
-.number128, .number256, .number512 {
-    font-size: 11vw;
-    line-height: 1.7em;
+#landscape-icon img {
+    height: 30vh;
 }
 
-/* fourDigits */
-.number1024, .number2048, .number4096, .number8192 {
-    font-size: 8vw;
-    line-height: 2.4em;
+#landscape-icon {
+    margin-top: 30vh;
+    text-align: center;
 }
 
-/* fiveDigits */
-.number16384, .number32768, .number65536 {
-    font-size: 6vw;
-    line-height: 3.2em;
+#landscape-wrapper p {
+    font-size: 5vh;
+    margin: 0;
+    color: white;
+    text-align: center;
 }
+} /*/// end of screen landscape remind ///*/
+
+/*/////// adjust iPad in portrait ////////*/
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px) 
+and (orientation : portrait){
+#slots {
+    height: 83.3vw; /* ipad在缺省的85vw高时下边会比较粗，需要调整细一点 */
+}
+}
+
+
+/*//////// panel style ////////*/
+.panel-form { padding:.8em 1.2em; font-family: Lucida Console, sans-serif;}
+.panel-form h2 { color:#555; margin:0 0 .8em 0; padding-bottom:.5em; border-bottom:1px solid rgba(0,0,0,.1); }
+.panel-form label { display:block; margin-top:1.2em; }
+.panel-form label img { width: 1em;}
+.switch .ui-slider-switch { width: 6.5em !important }
+.ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
+
