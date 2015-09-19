@@ -8,6 +8,36 @@ and open the template in the editor.
     Author     : Benny
 */
 
+#main-content {
+    padding: 0; /* there is padding default，which will cause a gap between the handle and left side edge */
+}
+
+/* menu handle occupy the whole left side. title and slots will float at its right side */
+#menu-handle {
+    height: 100vh;
+    float: left;
+}
+
+/* How to draw a menu handle image：
+1. Create a 60*300 image by pixlr;
+2. Draw a right half round retangle, border color black, border size 5, fill shape with white, radius 100;
+3. Draw a inner half round retangle, no border, fill shape with color(R212 G141 B59), radius 100
+4. Create another layer
+5. Draw 2 lines, color black, size 12, one is from (42,150) to (17,123), another is from (42,150) to (17,177)
+6. Draw 2 lines, color white, size 6, one is from (42,150) to (17,123), another is from (42,150) to (17,177)
+7. Save this canvas as swipe-right.png, with transparent.
+8. Flip the lines layer
+9. Save this canvas as swipe-left.png, with transparent.
+*/
+
+#menu-handle-img {
+    padding: 0; /* no gap between handle and screen left side*/
+    width: 6vw;
+    margin-top: 36vh; /* vertical middle*/
+    margin-right: 2.5vw;/* reasonable space with slots */
+}
+
+
 #header-wrapper {
     width: 85vw;
     margin-top: 3vh;
@@ -49,6 +79,11 @@ How to draw my game title image:
 
 #score h1 {
     margin: 1.5vh 0 1.5vh 0; /*调整上下整体对齐*/
+}
+
+#slots-wrapper {
+    margin-top: 3vh;
+    display: inline-block; /*让游戏区浮在menu-handle右边*/
 }
 
 #slots {
@@ -207,3 +242,13 @@ and (orientation : portrait){
     height: 83.3vw; /* ipad在缺省的85vw高时下边会比较粗，需要调整细一点 */
 }
 }
+
+
+/*//////// panel style ////////*/
+.panel-form { padding:.8em 1.2em; font-family: Lucida Console, sans-serif;}
+.panel-form h2 { color:#555; margin:0 0 .8em 0; padding-bottom:.5em; border-bottom:1px solid rgba(0,0,0,.1); }
+.panel-form label { display:block; margin-top:1.2em; }
+.panel-form label img { width: 1em;}
+.switch .ui-slider-switch { width: 6.5em !important }
+.ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
+

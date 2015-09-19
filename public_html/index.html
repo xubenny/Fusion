@@ -16,15 +16,56 @@
         <div data-role="page" class="ui-responsive-panel" id="main-page">
             <div data-role="main" class="ui-content" id="main-content">
 
+                <!--menu handle should be before title and slots, because it float left side-->
+                <div id="menu-handle">
+                    <a href="#menu-panel"><img id="menu-handle-img" src="image/swipe-right.png"></a>
+                </div>
+                
                 <!-- Title and Score -->
                 <div id="header-wrapper">
                     <img id="game-title" src="image/title.png">
                     <div id="score-title"><h1>score</h1></div>
                     <div id="score"><h1>0</h1></div>
-                </div><!--/分数-->
+                </div><!--score-->
 
-                <div id="slots"></div>
+                <div id="slots-wrapper"><div id="slots"></div></div>
             </div><!-- /main -->
+
+            <!--panel should be inside page, like main-->
+            <div data-role="panel" data-position="left" data-position-fixed="false" data-display="push" id="menu-panel" data-theme="b">
+                <form class="panel-form">
+                    <h2>Menu</h2>
+                    <label>difficulty</label>
+                        <fieldset data-role="controlgroup" data-type="horizontal">
+                            <input type="radio" name="radio-difficulty" id="radio-difficulty-4x4" value="4" checked="checked">
+                            <label for="radio-difficulty-4x4">4x4</label>
+                            <input type="radio" name="radio-difficulty" id="radio-difficulty-5x5" value="5">
+                            <label for="radio-difficulty-5x5">5x5</label>
+                            <input type="radio" name="radio-difficulty" id="radio-difficulty-6x6" value="6">
+                            <label for="radio-difficulty-6x6">6x6</label>
+                        </fieldset>
+                                                    
+                    <label>style</label>
+                        <fieldset data-role="controlgroup" data-type="horizontal">
+                            <input type="radio" name="radio-style" id="radio-style-number" value="number" checked="checked">
+                            <label for="radio-style-number">2</label>
+                            <input type="radio" name="radio-style" id="radio-style-symbol" value="symbol">
+                            <label for="radio-style-symbol"><img src="image/symbol.png"></label>
+                        </fieldset>
+
+                    <label>sound</label>
+                        <fieldset data-role="controlgroup" data-type="horizontal">
+                            <input type="radio" name="radio-sound" id="radio-sound-on" value="on" checked="checked">
+                            <label for="radio-sound-on">On</label>
+                            <input type="radio" name="radio-sound" id="radio-sound-off" value="off">
+                            <label for="radio-sound-off">Off</label>
+                        </fieldset>
+
+                    <div class="ui-grid-a"></div>
+                    <a href="#" class="ui-btn ui-corner-all">high score</a>
+		</form><!--panel-form-->
+            </div><!-- /panel -->
+
         </div><!-- /page -->
         
         
