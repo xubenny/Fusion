@@ -1,0 +1,55 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Aug 28, 2015, 4:54:16 PM
+    Author     : Benny
+*/
+
+
+.slot {
+    width: 19vw;
+    height: 19vw;
+    margin: 1vw 1vw 0 1vw; /* experienced value */
+}
+
+.cube {
+    width: 19vw;
+    height: 19vw;/* should be same as .slot */
+    margin: 1vw 1vw 0 1vw;
+}
+
+/* one digit */
+.number1, .number2, .number4, .number8 {
+    font-size: 16vw; /*通过viewport width的百分比来定义大小，以实现响应式设计*/
+    line-height: 1.2em;
+}
+
+/* two digits*/
+.number16, .number32, .number64 {
+    font-size: 14vw;
+    line-height: 1.35em;
+}
+
+/* threeDigits */
+.number128, .number256, .number512 {
+    font-size: 11vw;
+    line-height: 1.7em;
+}
+
+/* fourDigits */
+.number1024, .number2048, .number4096, .number8192 {
+    font-size: 8vw;
+    line-height: 2.4em;
+}
+
+/* fiveDigits */
+.number16384, .number32768, .number65536 {
+    font-size: 6vw;
+    line-height: 3.2em;
+}
+
+
+

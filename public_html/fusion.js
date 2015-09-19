@@ -4,7 +4,6 @@
  * and open the template in the editor.
  * 
  */
-
 var slots;  // store the cube's pointers
 var maxRowCol = 4; // dimension of slots, can be changed by difficulty option
 var initValue = 2;
@@ -17,12 +16,21 @@ $(document).ready(function(){
     $(window).resize(adjustPosition);
 
     // change the arrow when menu has been open or close
-    $( "#menu-panel" ).panel({
+    $("#menu-panel" ).panel({
         open: function() {$("#menu-handle-img").attr("src", "image/swipe-left.png");}
     });
-    $( "#menu-panel" ).panel({
+    $("#menu-panel" ).panel({
         close: function() {$("#menu-handle-img").attr("src", "image/swipe-right.png");}
     }); 
+    
+    // click difficulty radio button
+    $("input[name='radio-difficulty']").change(function() {
+        maxRowCol = parseInt($(this).val());
+        $("#menu-panel" ).panel("close");
+        newGame();
+    });
+
+
 
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
@@ -51,9 +59,30 @@ function newGame () {
     for(col = 0; col < maxRowCol; col++)
         slots[row][col] = null;
 
+    // remove all cubes
+    $(".cube").remove();
+
+    // remove all slots
+    $(".slot").remove();
+
+    // reset style sheet
+    switch (maxRowCol) {
+    case 4:
+        $("#5x5style").attr('disabled', true);
+        $("#4x4style").attr('disabled', false);
+        break;
+    case 5:
+        $("#4x4style").attr('disabled', true);
+        $("#5x5style").attr('disabled', false);
+        break;
+    }    
+
     // create slots to contain the cubes
     for (i=0; i< maxRowCol*maxRowCol; i++)
         $("#slots").append("<div class='slot'></div>");
+
+    // reset score
+    $("#score").html('<h1>0</h1>');
 
     // start a new game
     createCube();
