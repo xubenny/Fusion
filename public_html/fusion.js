@@ -11,6 +11,7 @@ var cubeStyle;
 var soundSwitch;
 
 var moves;  // store movement used for rewind
+var mainPageAction = "none"; // can be "new game" "revive game" "load game"
 
 
 $(document).ready(function(){
@@ -37,9 +38,23 @@ $(document).ready(function(){
     
     // click difficulty radio button
     $("input[name='radio-difficulty']").change(function() {
-        maxRowCol = parseInt($(this).val());
+        // if user press the radio already checked, it mean he want to new game
+        if(maxRowCol == parseInt($(this).val()))
+            newGame();
+        // if user press the radio not checked, 
+        // it mean he want to new game
+        else {
+            saveProgress(); // save progress to local before leave
+            maxRowCol = parseInt($(this).val());
+            localStorage.difficulty = maxRowCol; // remember config in local storage
+
+            // start a new game if there is no local storage
+            if(!localStorage.getItem("cubes" + maxRowCol))
+                newGame();
+            else
+                loadGame();
+        }
         $("#menu-panel" ).panel("close");
-        newGame();
     });
 
     // click style radio button
@@ -66,6 +81,9 @@ $(document).ready(function(){
     $("#score-title").click(function() {
        reviveGame(true); 
     });
+    
+    // save progree before browse is closed or session is expired
+    window.onbeforeunload = saveProgress;
     
     // new or revive game when page change from game over page to main page
     $("body").pagecontainer({
@@ -105,16 +123,186 @@ $(document).ready(function(){
      for(var row = 0; row < 6; row++)
          slots[row] = new Array();
     
-    maxRowCol = parseInt($("input[name='radio-difficulty']:checked").val());
-    initValue = parseInt($("label[for='radio-style-number']").text());
-    cubeStyle = $("input[name='radio-style']:checked").val();
-    soundSwitch = $("input[name='radio-sound']:checked").val()
+    // retrieve the difficulty config from local storage
+    if (localStorage.difficulty) {
+        maxRowCol = parseInt(localStorage.difficulty);
+        switch (maxRowCol) {
+            case 4:
+                $("#radio-difficulty-4x4").prop("checked", true);
+                break;
+            case 5:
+                $("#radio-difficulty-5x5").prop("checked", true);
+                break;
+        }
+        $("input[name='radio-difficulty']").checkboxradio("refresh");
+    }
+    else
+        maxRowCol = parseInt($("input[name='radio-difficulty']:checked").val());
 
-    newGame();
+    // initialValue
+    if (localStorage.initvalue) {
+        initValue = parseInt(localStorage.initvalue);  // here parseInt is necessary, otherwise, a string will be set to initValue, cause unexpect problem
+        $("label[for='radio-style-number']").text(initValue);
+    }
+    else
+        initValue = parseInt($("label[for='radio-style-number']").text());
+    
+    // cubeStyle
+    if (localStorage.cubestyle) {
+        cubeStyle = localStorage.cubestyle;
+        // set to menu
+        if (cubeStyle == "number") {
+            $("#radio-style-number").prop("checked", true);
+        }
+        else {
+            $("#radio-style-symbol").prop("checked", true);
+        }
+        $("input[name='radio-style']").checkboxradio("refresh");
+    }
+    else
+        cubeStyle = $("input[name='radio-style']:checked").val();
+    
+    // sound
+    if (localStorage.sound) {
+        soundSwitch = localStorage.sound;
+        if(soundSwitch == "on")
+            $("#radio-sound-on").prop("checked", true);
+        else
+            $("#radio-sound-off").prop("checked", true);
+        $("input[name='radio-sound']").checkboxradio("refresh");
+    }
+    else
+        soundSwitch = $("input[name='radio-sound']:checked").val()
+     
+    // retrieve saved progress from local storage
+    if (localStorage.getItem("cubes" + maxRowCol))
+        loadGame();
+    else
+        newGame();
 }); // end ready
+
+function saveProgress() {
+    var count = 0;
+    var cubes = new Array();
+    var cube;
+
+    for(row=0; row < maxRowCol; row++)
+    for(col=0; col < maxRowCol; col++) {
+        cube = slots[row][col];
+        if (cube != null) {
+            cubes[count] = {
+                "row": row,
+                "col": col,
+                "value": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
+            };
+            count++;
+        }
+    }
+
+    // save to difference entries
+    localStorage.setItem("cubes" + maxRowCol, JSON.stringify(cubes));
+    localStorage.setItem("moves" + maxRowCol, JSON.stringify(moves));
+    var score = parseInt($("#score").text());
+    localStorage.setItem("score" + maxRowCol, score);
+}
+
+// load game from cubes which is retrieve from local storage
+function loadGame () {
+    // reset global variable
+    resetVariables();
+
+    // restore cubes to corespond position
+    var json = localStorage.getItem("cubes" + maxRowCol);
+    var cubes = JSON.parse(json);
+    var cube;
+
+    for(count=0; count<cubes.length; count++) {
+        value = cubes[count].value * initValue; // local store is pure value
+        row = cubes[count].row;
+        col = cubes[count].col;
+
+        // set outlook
+        switch (cubeStyle) {
+            case "number":
+                cube = $("<div class='cube'>" + value + "</div>");
+                break;
+            case "symbol":
+                var fileName = 'image/' + value + '.png';
+                cube = $("<div class='cube'>" + "<img src=" + fileName + ">" + "</div>");
+                break;
+        }
+        // set style and data
+        cube.addClass("number" + value);  //set color and background
+        cube.data("value", value);
+
+        // set position
+        var slotleft = $('.slot').eq(row * maxRowCol + col).position().left;
+        var slottop = $('.slot').eq(row * maxRowCol + col).position().top;
+        cube.css({left: slotleft, top: slottop});
+        $("#slots").append(cube);
+        slots[row][col] = cube;
+
+        cube.css('display','initial');
+        cube.addClass('showCube');
+    } // end for
+    
+    // restore moves
+    json = localStorage.getItem("moves" + maxRowCol);
+    moves = JSON.parse(json);
+    
+    // restore score
+    var score = localStorage.getItem("score" + maxRowCol);
+    $("#score").html('<h1>' + score + '</h1>');
+
+    if (soundSwitch == "on")
+        document.getElementById('change-sound').play();
+}
+
+function resetVariables() {
+    // remove all cubes
+    $(".cube").remove();
+
+    // remove all slots
+    $(".slot").remove();
+
+    // reset slots pointers
+    for(row = 0; row < maxRowCol; row++)
+    for(col = 0; col < maxRowCol; col++)
+        slots[row][col] = null;
+
+    // empty movements record
+    moves = [];
+
+    // reset style sheet
+    switch (maxRowCol) {
+    case 4:
+        $("#5x5style").attr('disabled', true);
+        $("#6x6style").attr('disabled', true);
+        $("#4x4style").attr('disabled', false);
+        break;
+    case 5:
+        $("#4x4style").attr('disabled', true);
+        $("#6x6style").attr('disabled', true);
+        $("#5x5style").attr('disabled', false);
+        break;
+    case 6:
+        $("#4x4style").attr('disabled', true);
+        $("#5x5style").attr('disabled', true);
+        $("#6x6style").attr('disabled', false);
+        break;
+    }    
+
+    // create slots to contain the cubes
+    for (i=0; i< maxRowCol*maxRowCol; i++)
+        $("#slots").append("<div class='slot'></div>");
+    
+    // reset score
+    $("#score").html('<h1>0</h1>');
+}
 
 function setSoundOnOff (sound) {
     soundSwitch = sound;
+    localStorage.sound = sound; // remember config in local storage
 
     if (sound == "on")
         document.getElementById('change-sound').play();
@@ -159,6 +347,7 @@ function setCubeStyle (style) {
                 }
                 // change the menu label
                 $("label[for='radio-style-number']").text(initValue);
+                localStorage.initvalue = initValue;
             }
             break;
         case "symbol":
@@ -170,6 +359,7 @@ function setCubeStyle (style) {
             break;
     }
     cubeStyle = style;
+    localStorage.cubestyle = style; // remember config in local storage
 
     if (soundSwitch == "on")
         document.getElementById('change-sound').play();
@@ -190,39 +380,9 @@ function adjustPosition() {
 }
 
 function newGame () {
-    // reset slots pointers
-    for(row = 0; row < maxRowCol; row++)
-    for(col = 0; col < maxRowCol; col++)
-        slots[row][col] = null;
-
-    // remove all cubes
-    $(".cube").remove();
-
-    // remove all slots
-    $(".slot").remove();
-
-    // empty movements record
-    moves = [];
-
-    // reset style sheet
-    switch (maxRowCol) {
-    case 4:
-        $("#5x5style").attr('disabled', true);
-        $("#4x4style").attr('disabled', false);
-        break;
-    case 5:
-        $("#4x4style").attr('disabled', true);
-        $("#5x5style").attr('disabled', false);
-        break;
-    }    
-
-    // create slots to contain the cubes
-    for (i=0; i< maxRowCol*maxRowCol; i++)
-        $("#slots").append("<div class='slot'></div>");
-
-    // reset score
-    $("#score").html('<h1>0</h1>');
-
+    // reset global variable
+    resetVariables();
+    
     // start a new game
     createCube();
 
