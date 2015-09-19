@@ -16,6 +16,14 @@ $(document).ready(function(){
 
     $(window).resize(adjustPosition);
 
+    // change the arrow when menu has been open or close
+    $( "#menu-panel" ).panel({
+        open: function() {$("#menu-handle-img").attr("src", "image/swipe-left.png");}
+    });
+    $( "#menu-panel" ).panel({
+        close: function() {$("#menu-handle-img").attr("src", "image/swipe-right.png");}
+    }); 
+
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
      for(var row = 0; row < 6; row++)
