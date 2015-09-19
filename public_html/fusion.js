@@ -7,6 +7,9 @@
 var slots;  // store the cube's pointers
 var maxRowCol = 4; // dimension of slots, can be changed by difficulty option
 var initValue = 2;
+var cubeStyle;
+var soundSwitch;
+
 
 $(document).ready(function(){
     $(document).on('keydown', keydownHandler);
@@ -23,6 +26,13 @@ $(document).ready(function(){
         close: function() {$("#menu-handle-img").attr("src", "image/swipe-right.png");}
     }); 
     
+    // click menu handle sound switch
+    $("#menu-handle").click(function() {
+        if (soundSwitch == "on")
+            document.getElementById('click-sound').play();
+        
+    });
+    
     // click difficulty radio button
     $("input[name='radio-difficulty']").change(function() {
         maxRowCol = parseInt($(this).val());
@@ -36,13 +46,30 @@ $(document).ready(function(){
         $("#menu-panel" ).panel("close");
     });
 
+    // click sound radio button
+    $("input[name='radio-sound']").change(function() {
+        setSoundOnOff($(this).val());
+    });
+
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
      for(var row = 0; row < 6; row++)
          slots[row] = new Array();
     
+    maxRowCol = parseInt($("input[name='radio-difficulty']:checked").val());
+    initValue = parseInt($("label[for='radio-style-number']").text());
+    cubeStyle = $("input[name='radio-style']:checked").val();
+    soundSwitch = $("input[name='radio-sound']:checked").val()
+
     newGame();
 }); // end ready
+
+function setSoundOnOff (sound) {
+    soundSwitch = sound;
+
+    if (sound == "on")
+        document.getElementById('change-sound').play();
+}
 
 function setCubeStyle (style) {
     switch (style) {
@@ -94,6 +121,9 @@ function setCubeStyle (style) {
             break;
     }
     cubeStyle = style;
+
+    if (soundSwitch == "on")
+        document.getElementById('change-sound').play();
 }
 
 
@@ -143,6 +173,9 @@ function newGame () {
 
     // start a new game
     createCube();
+
+    if (soundSwitch == "on")
+        document.getElementById('change-sound').play();
 }
 
 
@@ -158,7 +191,15 @@ function createCube(){
         {
             if (slots[row][col] === null)
             {
-                cube = $("<div class='cube'>" + initValue + "</div>");
+                switch (cubeStyle) {
+                    case "number":
+                        cube = $("<div class='cube'>" + initValue + "</div>");
+                        break;
+                    case "symbol":
+                        var fileName = 'image/' + initValue + '.png';
+                        cube = $("<div class='cube'>" + "<img src=" + fileName + ">" + "</div>");
+                        break;
+                }
                 cube.data("value", initValue);
                 cube.addClass("number" + initValue);  //set color and background
                 var slotleft = $('.slot').eq(row * maxRowCol + col).position().left;
@@ -182,8 +223,10 @@ function createCube(){
 
 
 var bMoved;
+var upgradeNumber;
 function moveCubes(direction) {
     bMoved = false;
+    upgradeNumber = 0;
 
     // clear show and merged tag
     for(row=0;row<maxRowCol;row++)
@@ -222,8 +265,12 @@ function moveCubes(direction) {
             break;
     }
     
-    if(bMoved)
+    if(bMoved) {
         createCube();
+        // play the sound coresponding to the largest number be upgraded
+        if (soundSwitch == "on")
+            document.getElementById('upgrade-sound' + upgradeNumber).play();
+    }
 }
 
 function moveCube(row, col, direction) {
@@ -302,7 +349,15 @@ function upgrade(cube) {
     cube.data("value", value);
 
     // upgrade outlook
-    cube.text(value);
+    switch (cubeStyle) {
+        case "number":
+            cube.text(value);
+            break;
+        case "symbol":
+            var fileName = "image/" + value + ".png";
+            cube.children().attr("src", fileName);
+            break;
+    }
 
     // upgrade style
     cube.addClass("number" + value);
@@ -312,6 +367,10 @@ function upgrade(cube) {
     var score = parseInt($("#score").text());
     score+= value/initValue;
     $("#score").html('<h1>' + score + '</h1>');
+
+    // tell moveCubes() the largest upgrade number
+    if(upgradeNumber < value/2/initValue)
+        upgradeNumber = value/2/initValue;
 }
 
 
