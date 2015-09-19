@@ -115,6 +115,11 @@ How to draw my game title image:
     -webkit-transition:left 0.2s, top 0.2s;
 }
 
+.cube img {
+    width: 100%;
+    height: 100%;
+}
+
 .showCube {
     /* 方块出现的时候有动画 */
     -webkit-animation-duration: 0.4s;

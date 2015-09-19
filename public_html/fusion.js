@@ -30,7 +30,11 @@ $(document).ready(function(){
         newGame();
     });
 
-
+    // click style radio button
+    $("input[name='radio-style']").change(function() {
+        setCubeStyle($(this).val());
+        $("#menu-panel" ).panel("close");
+    });
 
     // initial an 2 dimension slots array, just need once during whole session
     slots = new Array();
@@ -39,6 +43,59 @@ $(document).ready(function(){
     
     newGame();
 }); // end ready
+
+function setCubeStyle (style) {
+    switch (style) {
+        case "number":
+            // switch from "symbol" to "number"
+            if (cubeStyle != "number") {
+                $(".cube").each(function() {
+                    $(this).html($(this).data("value"));
+                });
+            }
+            // here is a trick, upgrade the number if press it REPEATLY
+            else {
+                if (initValue < 512) {  // there should be some limit
+                    $(".cube").each(function() { // upgrade all cubes
+                        value = $(this).data("value");
+                        // if do not remove, high number class will take higher priority than low number
+                        $(this).removeClass("number" + value);  
+
+                        value *= 2;
+                        $(this).data("value", value);
+                        $(this).text(value);
+                        $(this).addClass("number" + value);
+                    });
+                    initValue *= 2;
+                }
+                // recycle to 1
+                else {
+                    $(".cube").each(function() {
+                        value = $(this).data("value");
+                        $(this).removeClass("number" + value);
+
+                        value /= initValue;
+                        $(this).data("value", value);
+                        $(this).text(value);
+                        $(this).addClass("number" + value);
+                    });
+                    initValue = 1;
+                }
+                // change the menu label
+                $("label[for='radio-style-number']").text(initValue);
+            }
+            break;
+        case "symbol":
+            // switch all cubes from number to symbol
+            $(".cube").each(function() {
+                fileName = 'image/' + $(this).data("value") + '.png';
+                $(this).html("<img src=" + fileName + ">");
+            });
+            break;
+    }
+    cubeStyle = style;
+}
+
 
 // put the cube to the right place when window is resized
 function adjustPosition() {
