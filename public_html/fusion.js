@@ -459,7 +459,7 @@ function reviveGame(oneStep) {
     if (moves.length > 0)
         setTimeout(function (){
             reviveGame();
-        }, 500);
+        }, 400);
 }
 
 function rewindCube(row, col, cubeAction) {
@@ -557,6 +557,9 @@ function keydownHandler (key) {
             break;
         case 27: // escape
             reviveGame(true);   // true mean just rewind one step
+            break;
+        case 36: // home
+            reviveGame(false);   // false mean rewind 10 steps
             break;
     }
 }
