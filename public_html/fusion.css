@@ -119,8 +119,26 @@ How to draw my game title image:
     height: 100%;
 }
 
+.number1 {background: Azure; color: black;}
+.number2 {background: snow; color: black;}
+.number4 {background: papayaWhip; color: black;}
+.number8 {background: LightSalmon; color: white;}
+.number16 {background: SandyBrown; color: white;}
+.number32 {background: coral; color: white;}
+.number64 {background: OrangeRed; color: white;}
+.number128 {background: Gold; color: white;}
+.number256 {background: Khaki; color: white;}
+.number512 {background: Orange; color: white;}
+.number1024 {background: GoldenRod; color: white;}
+.number2048 {background: GoldenRod; color: white;}
+.number4096 {background: DarkGreen; color: white;}
+.number8192 {background: Blue; color: white;}
+.number16384 {background: Black; color: white;}
+.number32768 {background: Red; color: white;}
+.number65536 {background: Red; color: white;}
+
 .showCube {
-    /* 方块出现的时候有动画 */
+    /* animation when a cube is created */
     -webkit-animation-duration: 0.4s;
     -webkit-animation-iteration-count: 1;
     -webkit-animation-name: 'Showup';
@@ -146,23 +164,55 @@ How to draw my game title image:
     }
 }
 
-.number1 {background: Azure; color: black;}
-.number2 {background: snow; color: black;}
-.number4 {background: papayaWhip; color: black;}
-.number8 {background: LightSalmon; color: white;}
-.number16 {background: SandyBrown; color: white;}
-.number32 {background: coral; color: white;}
-.number64 {background: OrangeRed; color: white;}
-.number128 {background: Gold; color: white;}
-.number256 {background: Khaki; color: white;}
-.number512 {background: Orange; color: white;}
-.number1024 {background: GoldenRod; color: white;}
-.number2048 {background: GoldenRod; color: white;}
-.number4096 {background: DarkGreen; color: white;}
-.number8192 {background: Blue; color: white;}
-.number16384 {background: Black; color: white;}
-.number32768 {background: Red; color: white;}
-.number65536 {background: Red; color: white;}
+/*//////// panel style ////////*/
+.panel-form { padding:.8em 1.2em; font-family: Lucida Console, sans-serif;}
+.panel-form h2 { color:#555; margin:0 0 .8em 0; padding-bottom:.5em; border-bottom:1px solid rgba(0,0,0,.1); }
+.panel-form label { display:block; margin-top:1.2em; }
+.panel-form label img { width: 1em;}
+.switch .ui-slider-switch { width: 6.5em !important }
+.ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
+
+/*//////// game over page style ////////*/
+.game-action-title {
+    text-align: center;
+    height: 5em;
+    color: goldenrod;
+}
+
+#game-over-score {
+    text-align: center;
+    height: 5em;
+}
+
+#game-over-score h1, #game-over-score h2 {
+    display: inline;
+    margin: 0.2em;
+}
+
+.game-action-btn .ui-btn {
+    font-size: 2em;
+//    color: yellow;
+}
+
+/*//////// revive page style ////////*/
+#rewind-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    
+    background: black;
+    opacity: 0.6;
+    font-size: 4vh;
+    text-align: center;
+    color: white;
+    
+    display: none;
+}
+
+#rewind-wrapper p {
+    margin-top: 33vh;
+}
 
 /*/////////// screen landscape remind //////////////*/
 @media only screen and (orientation : portrait){
@@ -207,57 +257,5 @@ and (orientation : portrait){
 #slots {
     height: 83.3vw; /* ipad在缺省的85vw高时下边会比较粗，需要调整细一点 */
 }
-}
-
-
-/*//////// panel style ////////*/
-.panel-form { padding:.8em 1.2em; font-family: Lucida Console, sans-serif;}
-.panel-form h2 { color:#555; margin:0 0 .8em 0; padding-bottom:.5em; border-bottom:1px solid rgba(0,0,0,.1); }
-.panel-form label { display:block; margin-top:1.2em; }
-.panel-form label img { width: 1em;}
-.switch .ui-slider-switch { width: 6.5em !important }
-.ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
-
-
-/*//////// game over page style ////////*/
-.game-action-title {
-    text-align: center;
-    height: 5em;
-    color: goldenrod;
-}
-
-#game-over-score {
-    text-align: center;
-    height: 5em;
-}
-
-#game-over-score h1, #game-over-score h2 {
-    display: inline;
-    margin: 0.2em;
-}
-
-.game-action-btn .ui-btn {
-    font-size: 2em;
-//    color: yellow;
-}
-
-/*//////// revive page style ////////*/
-#rewind-wrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    
-    background: black;
-    opacity: 0.6;
-    font-size: 4vh;
-    text-align: center;
-    color: white;
-    
-    display: none;
-}
-
-#rewind-wrapper p {
-    margin-top: 33vh;
 }
 
