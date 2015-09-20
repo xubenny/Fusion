@@ -56,7 +56,7 @@ $(document).ready(function(){
         else {
             saveProgress(); // save progress to local before leave
             maxRowCol = parseInt($(this).val());
-            localStorage.difficulty = maxRowCol; // remember config in local storage
+            saveToLocal("difficulty", maxRowCol); // remember config in local storage
 
             // start a new game if there is no local storage
             if(!localStorage.getItem("cubes" + maxRowCol))
@@ -133,7 +133,7 @@ $(document).ready(function(){
     slots = new Array();
      for(var row = 0; row < 6; row++)
          slots[row] = new Array();
-    
+     
     // retrieve the difficulty config from local storage
     if (localStorage.difficulty) {
         maxRowCol = parseInt(localStorage.difficulty);
@@ -531,13 +531,16 @@ function newGame () {
 
 // load game from cubes which is retrieve from local storage
 function loadGame () {
-    // reset global variable
-    resetVariables();
-
     // restore cubes to corespond position
     var json = localStorage.getItem("cubes" + maxRowCol);
+    if (!json)
+        alert("loadGame() was called while 'cubes' is empty. This should not happened");
+    
     var cubes = JSON.parse(json);
     var cube;
+
+    // reset global variable
+    resetVariables();
 
     for(count=0; count<cubes.length; count++) {
         value = cubes[count].value * initValue; // local store is pure value
@@ -571,11 +574,13 @@ function loadGame () {
     
     // restore moves
     json = localStorage.getItem("moves" + maxRowCol);
-    moves = JSON.parse(json);
+    if(json)
+        moves = JSON.parse(json);
     
     // restore score
     var score = localStorage.getItem("score" + maxRowCol);
-    $("#score").html('<h1>' + score + '</h1>');
+    if(score)
+        $("#score").html('<h1>' + score + '</h1>');
 
     if (soundSwitch == "on")
         document.getElementById('change-sound').play();
@@ -779,7 +784,7 @@ function setCubeStyle (style) {
                 }
                 // change the menu label
                 $("label[for='radio-style-number']").text(initValue);
-                localStorage.initvalue = initValue;
+                saveToLocal("initvalue", initValue);
             }
             break;
         case "symbol":
@@ -791,7 +796,7 @@ function setCubeStyle (style) {
             break;
     }
     cubeStyle = style;
-    localStorage.cubestyle = style; // remember config in local storage
+    saveToLocal("cubestyle", style); // remember config in local storage
 
     if (soundSwitch == "on")
         document.getElementById('change-sound').play();
@@ -799,7 +804,7 @@ function setCubeStyle (style) {
 
 function setSoundOnOff (sound) {
     soundSwitch = sound;
-    localStorage.sound = sound; // remember config in local storage
+    saveToLocal("sound", sound); // remember config in local storage
 
     if (sound == "on")
         document.getElementById('change-sound').play();
@@ -837,8 +842,23 @@ function saveProgress() {
     }
 
     // save to difference entries
-    localStorage.setItem("cubes" + maxRowCol, JSON.stringify(cubes));
-    localStorage.setItem("moves" + maxRowCol, JSON.stringify(moves));
+    saveToLocal("cubes" + maxRowCol, JSON.stringify(cubes));
+    saveToLocal("moves" + maxRowCol, JSON.stringify(moves));
     var score = parseInt($("#score").text());
-    localStorage.setItem("score" + maxRowCol, score);
+    saveToLocal("score" + maxRowCol, score);
+}
+
+var bFailToSave = false;
+function saveToLocal(key, value) {
+    // if already tried to save to local but fail, will not try again
+    if(bFailToSave)
+        return;
+    
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        bFailToSave = true;
+        alert("och! i can't save your progress or config on your device,\n\
+             maybe you are using private browsing mode, or your device memory is full!");
+    }
 }
