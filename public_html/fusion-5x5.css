@@ -12,18 +12,18 @@ and open the template in the editor.
 .slot {
     width: 14.8vw;
     height: 14.8vw;
-    margin: 1vw 1vw 0 1vw; /*手动调整得到经验值*/
+    margin: 1vw 1vw 0 1vw; /* experieced value */
 }
 
 .cube {
-    width: 14.8vw; /*大小与.slot保持一致*/
+    width: 14.8vw; /* should be same as .slot */
     height: 14.8vw;
     margin: 1vw 1vw 0 1vw;
 }
 
 /* one digit */
 .number1, .number2, .number4, .number8 {
-    font-size: 13vw; /*通过viewport width的百分比来定义大小，以实现响应式设计*/
+    font-size: 13vw;
     line-height: 1.23em;
 }
 

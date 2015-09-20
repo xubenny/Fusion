@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <title>fusion</title>
 
+        <!-- tell iOS sarfari use the icon as a desktop shortcut -->
+        <link rel="apple-touch-icon" href="image\icon.png" />
+
         <!-- reference jQuery Mobile Style Sheet -->
         <link rel="stylesheet" href="js\jqm\jquery.mobile-1.4.5.min.css">
 
@@ -12,6 +15,7 @@
         <link rel="stylesheet" href="fusion.css">
         <link id="4x4style" rel="stylesheet" href="fusion-4x4.css">
         <link id="5x5style" rel="stylesheet" href="fusion-5x5.css">
+        <link id="6x6style" rel="stylesheet" href="fusion-6x6.css">
     </head>
 
     <body>
@@ -26,6 +30,7 @@
             <p>rewind 10 steps...</p>
         </div>
         
+        <!--/////////////// main page: content + panel //////////////////////-->
         <div data-role="page" class="ui-responsive-panel" id="main-page">
             <div data-role="main" class="ui-content" id="main-content">
 
@@ -41,6 +46,7 @@
                     <div id="score"><h1>0</h1></div>
                 </div><!--score-->
 
+                <!-- the content will be dynamic created in js -->
                 <div id="slots-wrapper"><div id="slots"></div></div>
             </div><!-- /main -->
 
@@ -54,6 +60,8 @@
                             <label for="radio-difficulty-4x4">4x4</label>
                             <input type="radio" name="radio-difficulty" id="radio-difficulty-5x5" value="5">
                             <label for="radio-difficulty-5x5">5x5</label>
+                            <input type="radio" name="radio-difficulty" id="radio-difficulty-6x6" value="6">
+                            <label for="radio-difficulty-6x6">6x6</label>
                         </fieldset>
                                                     
                     <label>style</label>

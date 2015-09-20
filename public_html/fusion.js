@@ -2,11 +2,19 @@
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
- * 
+ *
+ * How to add a difficulty of 6*6:
+ * 1. copy the link to css in <head> of index.html
+ * 2. copy input&label from 5*5 in <form class="my-panel-form"> of index.html, change everything to 6
+ * 3. copy prop("checked", true) in ready() from 5*5, change to 6
+ * 4. copy case 6 in resetVariables(), adjust everything involved
+ * 5. copy fusion-6x6.css file from 5x5, adjust every css style
+ *
  */
+
 var slots;  // store the cube's pointers
-var maxRowCol = 4; // dimension of slots, can be changed by difficulty option
-var initValue = 2;
+var maxRowCol; // dimension of slots, can be changed by difficulty option
+var initValue;
 var cubeStyle;
 var soundSwitch;
 
@@ -15,10 +23,12 @@ var mainPageAction = "none"; // can be "new game" "revive game" "load game"
 
 
 $(document).ready(function(){
+    ///////////// setup all event handle function /////////////
     $(document).on('keydown', keydownHandler);
     $(document).on('touchstart', touchHandler);
     $(document).on('touchmove', touchHandler);
 
+    // responsible in Windows
     $(window).resize(adjustPosition);
 
     // change the arrow when menu has been open or close
@@ -66,9 +76,10 @@ $(document).ready(function(){
     // click sound radio button
     $("input[name='radio-sound']").change(function() {
         setSoundOnOff($(this).val());
+        $("#menu-panel" ).panel("close");
     });
 
-    // click new game  or revive game button which in page two after game over
+    // click new game or revive game button which in page two after game over
     // or click new game or load game button which in page three after game over
     // the style sheet will be not ready if I invoke newGame() here, (the slots position left and top will be -7)
     // so I just mark here, and handle it in main-page change event
@@ -133,6 +144,9 @@ $(document).ready(function(){
             case 5:
                 $("#radio-difficulty-5x5").prop("checked", true);
                 break;
+            case 6:
+                $("#radio-difficulty-6x6").prop("checked", true);
+                break;
         }
         $("input[name='radio-difficulty']").checkboxradio("refresh");
     }
@@ -181,29 +195,338 @@ $(document).ready(function(){
         newGame();
 }); // end ready
 
-function saveProgress() {
-    var count = 0;
-    var cubes = new Array();
-    var cube;
+function keydownHandler (key) {
+    switch (key.which){
+        case 37:
+            moveCubes("Left");
+            break;
+        case 38:
+            moveCubes("Up");
+            break;
+        case 39:
+            moveCubes("Right");
+            break;
+        case 40:
+            moveCubes("Down");
+            break;
+        case 27: // escape
+            reviveGame(true);   // true mean just rewind one step
+            break;
+        case 36: // home
+            reviveGame(false);   // false mean rewind 10 steps
+            break;
+    }
+}
 
-    for(row=0; row < maxRowCol; row++)
-    for(col=0; col < maxRowCol; col++) {
+var touchstart = {"x":-1, "y":-1}; 
+var bCauseMove;
+function touchHandler(event) {
+    var touch;
+    touch = event.originalEvent.touches[0];
+    switch (event.type) {
+        case 'touchstart':
+            touchstart.x = touch.pageX;
+            touchstart.y = touch.pageY;
+            bCauseMove = false;
+            break;
+        case 'touchmove':
+            var distanceX = Math.abs(touch.pageX-touchstart.x);
+            var distanceY = Math.abs(touch.pageY-touchstart.y);
+
+            // bCauseMove mean the user's finger movement not cause any movement yet
+            if (!bCauseMove && (distanceX > 50 || distanceY > 50)) {
+                var direction;
+                if(distanceX > distanceY) { // horizonal
+                    if (touch.pageX > touchstart.x)
+                        direction = "Right";
+                    else
+                        direction = "Left";
+                }
+                else { // vertical
+                    if (touch.pageY > touchstart.y)
+                        direction = "Down";
+                    else
+                        direction = "Up";
+                }
+                moveCubes(direction);
+                bCauseMove = true;
+            }            
+            event.preventDefault();
+            break;
+    }
+}
+
+var bMoved; // for deciding whether create new cube depended on whether some cube are moved
+var upgradeNumber; // for play a upgrade sound
+function moveCubes(direction) {
+    bMoved = false;
+    upgradeNumber = 0;
+
+    // clear show and merged tag
+    for(row=0;row<maxRowCol;row++)
+    for(col=0;col<maxRowCol;col++) {
         cube = slots[row][col];
-        if (cube != null) {
-            cubes[count] = {
-                "row": row,
-                "col": col,
-                "value": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
-            };
-            count++;
+        if(cube !== null)
+        {
+            if (cube.hasClass("showCube"))
+                cube.removeClass("showCube");
+            if (cube.hasClass("mergedCube"))
+                cube.removeClass("mergedCube");
+            
+            // reset status for next move
+            // is OK even if there will be not a actual move
+            cube.data("originRow", row);
+            cube.data("originCol", col);
+            cube.data("action", "stay");
         }
     }
+    
+    switch (direction)
+    {
+        case "Left":
+            for(var col=1; col<maxRowCol; col++)
+                for(var row=0; row<maxRowCol; row++)
+                    moveCube(row, col, direction);
+            break;
+        case "Right":
+            for(var col=maxRowCol-2; col>=0; col--)
+                for(var row=0; row<maxRowCol; row++)
+                    moveCube(row, col, direction);
+            break;
+        case "Up":
+            for(var row=1; row<maxRowCol; row++)
+                for(var col=0; col<maxRowCol; col++)
+                    moveCube(row, col, direction);
+            break;
+        case "Down":
+            for(var row=maxRowCol-2; row>=0; row--)
+                for(var col=0; col<maxRowCol; col++)
+                    moveCube(row, col, direction);
+            break;
+    }
+    
+    if(bMoved) {
+        createCube();  // should placed before record snapshot
 
-    // save to difference entries
-    localStorage.setItem("cubes" + maxRowCol, JSON.stringify(cubes));
-    localStorage.setItem("moves" + maxRowCol, JSON.stringify(moves));
+        // record the snapshot, for play back
+        var cubes = new Array();
+        for(row=0; row<maxRowCol; row++) {
+            cubes[row] = new Array();
+            for(col=0; col<maxRowCol; col++) {
+                cubes[row][col] = null;
+                cube = slots[row][col];
+                
+                if (cube != null) {
+                    cubes[row][col] = {
+                        "action": cube.data("action"),
+                        "originRow": cube.data("originRow"),
+                        "originCol": cube.data("originCol"),
+                        "siblingOriginRow": cube.data("siblingOriginRow"),
+                        "siblingOriginCol": cube.data("siblingOriginCol")
+                    };
+                }
+            }
+        }  // end for
+
+        // save movements for at most 10 times
+        if (moves.length >= 10)
+            moves.shift();  // abandon the earliest one
+        moves.push({
+            "direction": direction,
+            "cubes": cubes
+        });
+        
+        if(gameWillOver()) {
+            $("#game-over-score h1").text($("#score").text());
+            setTimeout(function (){ // should give some time to user before tell him game over
+                $("body").pagecontainer("change", "#game-over-page", {changeHash: false});
+            }, 1000);
+        }
+        // play the sound coresponding to the largest number be upgraded
+        if (soundSwitch == "on")
+            document.getElementById('upgrade-sound' + upgradeNumber).play();
+    }
+}
+
+function moveCube(row, col, direction) {
+    var cube = slots[row][col];    
+
+    // empty cube
+    if (cube === null)
+        return;
+
+    // caculate the new position
+    var newRow = row;
+    var newCol = col;
+    switch (direction) {
+        case "Left": 
+            if(col===0)  // reach border
+                return;
+            newCol--; 
+            break;
+        case "Right":
+            if(col===maxRowCol-1)
+                return;
+            newCol++; 
+            break;
+        case "Up":
+            if(row===0)
+                return;
+            newRow--; 
+            break;
+        case "Down":
+            if(row===maxRowCol-1)
+                return;
+            newRow++; 
+            break;
+    }
+    
+    // move to next empty slot
+    if(slots[newRow][newCol]===null)
+    {
+        slots[newRow][newCol] = cube;
+        slots[row][col] = null;
+        cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
+                  top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
+              
+        cube.data("action", "moved"); // record for rewind
+
+        // continue move to same direction, use recursive method
+        moveCube(newRow, newCol, direction);
+        bMoved = true;
+    }
+    // do nothing if value not equal
+    else if(slots[newRow][newCol].data("value") !== cube.data("value")) {
+    }
+    // do nothing if next cube is just merged in the same round
+    else if(slots[newRow][newCol].hasClass("mergedCube")) {
+    }
+    // merge with next cube
+    else {
+        cube.data("action", "merged"); // record for rewind
+        cube.data("siblingOriginRow", slots[newRow][newCol].data("originRow")); // record the sibling's origin position before kill him
+        cube.data("siblingOriginCol", slots[newRow][newCol].data("originCol"));
+
+        slots[newRow][newCol].remove();
+        slots[newRow][newCol] = cube;
+        slots[row][col] = null;
+        cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
+                  top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
+        
+        upgrade(cube);
+        bMoved = true;
+    }
+}
+
+function createCube(){
+    var cube = null;
+    // random a row
+    var row = Math.floor(Math.random() * maxRowCol);
+    for(var countRow=0; (countRow<maxRowCol) && (cube===null); countRow++)
+    {
+        // random a col
+        var col = Math.floor(Math.random() * maxRowCol);
+        for(var countCol=0;(countCol<maxRowCol) && (cube===null); countCol++)
+        {
+            if (slots[row][col] === null)
+            {
+                switch (cubeStyle) {
+                    case "number":
+                        cube = $("<div class='cube'>" + initValue + "</div>");
+                        break;
+                    case "symbol":
+                        var fileName = 'image/' + initValue + '.png';
+                        cube = $("<div class='cube'>" + "<img src=" + fileName + ">" + "</div>");
+                        break;
+                }
+                cube.data("value", initValue);
+                cube.addClass("number" + initValue);  //set color and background
+                var slotleft = $('.slot').eq(row * maxRowCol + col).position().left;
+                var slottop = $('.slot').eq(row * maxRowCol + col).position().top;
+                cube.css({left: slotleft, top: slottop});  // set position
+                
+                // record for rewind
+                cube.data("action", "created");
+                cube.data("originRow", row);
+                cube.data("originCol", col);
+                
+                $("#slots").append(cube);
+                slots[row][col] = cube;
+
+                // for animation
+                cube.css('display','initial');
+                cube.addClass('showCube');
+            }
+            col++;
+            if(col===maxRowCol) col = 0;
+        }
+        row++;
+        if(row===maxRowCol) row = 0;
+    }
+}
+
+// upgrade the cube by times 2
+function upgrade(cube) {
+    var value = cube.data("value");
+
+    // if do not remove, high number class will take higher priority than low number
+    cube.removeClass("number" + value);  
+
+    // upgrade data
+    value *= 2;
+    cube.data("value", value);
+
+    // upgrade outlook
+    switch (cubeStyle) {
+        case "number":
+            cube.text(value);
+            break;
+        case "symbol":
+            var fileName = "image/" + value + ".png";
+            cube.children().attr("src", fileName);
+            break;
+    }
+
+    // upgrade style
+    cube.addClass("number" + value);
+    cube.addClass("mergedCube");
+
+    // refresh score
     var score = parseInt($("#score").text());
-    localStorage.setItem("score" + maxRowCol, score);
+    score+= value/initValue;
+    $("#score").html('<h1>' + score + '</h1>');
+
+    // tell moveCubes() the largest upgrade number
+    if(upgradeNumber < value/2/initValue)
+        upgradeNumber = value/2/initValue;
+}
+
+function gameWillOver() {
+    if ($(".cube").length < maxRowCol * maxRowCol)
+        return false;
+    
+    // not dead yet if there are two same neighbours
+    for (row=0; row<maxRowCol; row++)
+    for (col=0; col<maxRowCol-1; col++)
+        if(slots[row][col].data("value") == slots[row][col+1].data("value"))
+            return false;
+    for (col=0; col<maxRowCol; col++)
+    for (row=0; row<maxRowCol-1; row++)
+        if(slots[row][col].data("value") == slots[row+1][col].data("value"))
+            return false;
+
+    return true;
+}
+
+function newGame () {
+    // reset global variable
+    resetVariables();
+    
+    // start a new game
+    createCube();
+
+    if (soundSwitch == "on")
+        document.getElementById('change-sound').play();
 }
 
 // load game from cubes which is retrieve from local storage
@@ -298,360 +621,6 @@ function resetVariables() {
     
     // reset score
     $("#score").html('<h1>0</h1>');
-}
-
-function setSoundOnOff (sound) {
-    soundSwitch = sound;
-    localStorage.sound = sound; // remember config in local storage
-
-    if (sound == "on")
-        document.getElementById('change-sound').play();
-}
-
-function setCubeStyle (style) {
-    switch (style) {
-        case "number":
-            // switch from "symbol" to "number"
-            if (cubeStyle != "number") {
-                $(".cube").each(function() {
-                    $(this).html($(this).data("value"));
-                });
-            }
-            // here is a trick, upgrade the number if press it REPEATLY
-            else {
-                if (initValue < 512) {  // there should be some limit
-                    $(".cube").each(function() { // upgrade all cubes
-                        value = $(this).data("value");
-                        // if do not remove, high number class will take higher priority than low number
-                        $(this).removeClass("number" + value);  
-
-                        value *= 2;
-                        $(this).data("value", value);
-                        $(this).text(value);
-                        $(this).addClass("number" + value);
-                    });
-                    initValue *= 2;
-                }
-                // recycle to 1
-                else {
-                    $(".cube").each(function() {
-                        value = $(this).data("value");
-                        $(this).removeClass("number" + value);
-
-                        value /= initValue;
-                        $(this).data("value", value);
-                        $(this).text(value);
-                        $(this).addClass("number" + value);
-                    });
-                    initValue = 1;
-                }
-                // change the menu label
-                $("label[for='radio-style-number']").text(initValue);
-                localStorage.initvalue = initValue;
-            }
-            break;
-        case "symbol":
-            // switch all cubes from number to symbol
-            $(".cube").each(function() {
-                fileName = 'image/' + $(this).data("value") + '.png';
-                $(this).html("<img src=" + fileName + ">");
-            });
-            break;
-    }
-    cubeStyle = style;
-    localStorage.cubestyle = style; // remember config in local storage
-
-    if (soundSwitch == "on")
-        document.getElementById('change-sound').play();
-}
-
-
-// put the cube to the right place when window is resized
-function adjustPosition() {
-    for(var row = 0; row < maxRowCol; row++)
-    for(var col = 0; col < maxRowCol; col++) {
-        cube = slots[row][col];
-        if(cube != null) {
-            // reset the cube position
-            cube.css({left: $('.slot').eq(row * maxRowCol + col).position().left,
-                        top: $('.slot').eq(row * maxRowCol + col).position().top});
-        }
-    }
-}
-
-function newGame () {
-    // reset global variable
-    resetVariables();
-    
-    // start a new game
-    createCube();
-
-    if (soundSwitch == "on")
-        document.getElementById('change-sound').play();
-}
-
-
-function createCube(){
-    var cube = null;
-    // random a row
-    var row = Math.floor(Math.random() * maxRowCol);
-    for(var countRow=0; (countRow<maxRowCol) && (cube===null); countRow++)
-    {
-        // random a col
-        var col = Math.floor(Math.random() * maxRowCol);
-        for(var countCol=0;(countCol<maxRowCol) && (cube===null); countCol++)
-        {
-            if (slots[row][col] === null)
-            {
-                switch (cubeStyle) {
-                    case "number":
-                        cube = $("<div class='cube'>" + initValue + "</div>");
-                        break;
-                    case "symbol":
-                        var fileName = 'image/' + initValue + '.png';
-                        cube = $("<div class='cube'>" + "<img src=" + fileName + ">" + "</div>");
-                        break;
-                }
-                cube.data("value", initValue);
-                cube.addClass("number" + initValue);  //set color and background
-                var slotleft = $('.slot').eq(row * maxRowCol + col).position().left;
-                var slottop = $('.slot').eq(row * maxRowCol + col).position().top;
-                cube.css({left: slotleft, top: slottop});  // set position
-                
-                // record for rewind
-                cube.data("action", "created");
-                cube.data("originRow", row);
-                cube.data("originCol", col);
-                
-                $("#slots").append(cube);
-                slots[row][col] = cube;
-
-                // for animation
-                cube.css('display','initial');
-                cube.addClass('showCube');
-            }
-            col++;
-            if(col===maxRowCol) col = 0;
-        }
-        row++;
-        if(row===maxRowCol) row = 0;
-    }
-}
-
-
-var bMoved;
-var upgradeNumber;
-function moveCubes(direction) {
-    bMoved = false;
-    upgradeNumber = 0;
-
-    // clear show and merged tag
-    for(row=0;row<maxRowCol;row++)
-    for(col=0;col<maxRowCol;col++) {
-        cube = slots[row][col];
-        if(cube !== null)
-        {
-            if (cube.hasClass("showCube"))
-                cube.removeClass("showCube");
-            if (cube.hasClass("mergedCube"))
-                cube.removeClass("mergedCube");
-            
-            // reset status for next move
-            // is OK even if there will be not a actual move
-            cube.data("originRow", row);
-            cube.data("originCol", col);
-            cube.data("action", "stay");
-        }
-    }
-    
-    switch (direction)
-    {
-        case "Left":
-            for(var col=1; col<maxRowCol; col++)
-                for(var row=0; row<maxRowCol; row++)
-                    moveCube(row, col, direction);
-            break;
-        case "Right":
-            for(var col=maxRowCol-2; col>=0; col--)
-                for(var row=0; row<maxRowCol; row++)
-                    moveCube(row, col, direction);
-            break;
-        case "Up":
-            for(var row=1; row<maxRowCol; row++)
-                for(var col=0; col<maxRowCol; col++)
-                    moveCube(row, col, direction);
-            break;
-        case "Down":
-            for(var row=maxRowCol-2; row>=0; row--)
-                for(var col=0; col<maxRowCol; col++)
-                    moveCube(row, col, direction);
-            break;
-    }
-    
-    if(bMoved) {
-        createCube();
-
-        // record the snapshot, for play back
-        var cubes = new Array();
-        for(row=0; row<maxRowCol; row++) {
-            cubes[row] = new Array();
-            for(col=0; col<maxRowCol; col++) {
-                cubes[row][col] = null;
-                cube = slots[row][col];
-                
-                if (cube != null) {
-                    cubes[row][col] = {
-                        "action": cube.data("action"),
-                        "originRow": cube.data("originRow"),
-                        "originCol": cube.data("originCol"),
-                        "siblingOriginRow": cube.data("siblingOriginRow"),
-                        "siblingOriginCol": cube.data("siblingOriginCol")
-                    };
-                }
-            }
-        }  // end for
-
-        // save movements for at most 10 times
-        if (moves.length >= 10)
-            moves.shift();  // abandon the earliest one
-        moves.push({
-            "direction": direction,
-            "cubes": cubes
-        });
-        
-        if(gameWillOver()) {
-            $("#game-over-score h1").text($("#score").text());
-            setTimeout(function (){ // should give some time to user before tell him game over
-                $("body").pagecontainer("change", "#game-over-page", {changeHash: false});
-            }, 1000);
-        }
-        // play the sound coresponding to the largest number be upgraded
-        if (soundSwitch == "on")
-            document.getElementById('upgrade-sound' + upgradeNumber).play();
-    }
-}
-
-function gameWillOver() {
-    if ($(".cube").length < maxRowCol * maxRowCol)
-        return false;
-    
-    // not dead yet if there are two same neighbours
-    for (row=0; row<maxRowCol; row++)
-    for (col=0; col<maxRowCol-1; col++)
-        if(slots[row][col].data("value") == slots[row][col+1].data("value"))
-            return false;
-    for (col=0; col<maxRowCol; col++)
-    for (row=0; row<maxRowCol-1; row++)
-        if(slots[row][col].data("value") == slots[row+1][col].data("value"))
-            return false;
-
-    return true;
-}
-
-function moveCube(row, col, direction) {
-    var cube = slots[row][col];    
-
-    // empty cube
-    if (cube === null)
-        return;
-
-    // caculate the new position
-    var newRow = row;
-    var newCol = col;
-    switch (direction) {
-        case "Left": 
-            if(col===0)  // reach border
-                return;
-            newCol--; 
-            break;
-        case "Right":
-            if(col===maxRowCol-1)
-                return;
-            newCol++; 
-            break;
-        case "Up":
-            if(row===0)
-                return;
-            newRow--; 
-            break;
-        case "Down":
-            if(row===maxRowCol-1)
-                return;
-            newRow++; 
-            break;
-    }
-    
-    // move to next empty slot
-    if(slots[newRow][newCol]===null)
-    {
-        slots[newRow][newCol] = cube;
-        slots[row][col] = null;
-        cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
-                  top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
-              
-        cube.data("action", "moved"); // record for rewind
-
-        // continue move to same direction, use recursive method
-        moveCube(newRow, newCol, direction);
-        bMoved = true;
-    }
-    // do nothing if value not equal
-    else if(slots[newRow][newCol].data("value") !== cube.data("value")) {
-    }
-    // do nothing if next cube is just merged in the same round
-    else if(slots[newRow][newCol].hasClass("mergedCube")) {
-    }
-    // merge with next cube
-    else {
-        cube.data("action", "merged"); // record for rewind
-        cube.data("siblingOriginRow", slots[newRow][newCol].data("originRow")); // record the sibling's origin position before kill him
-        cube.data("siblingOriginCol", slots[newRow][newCol].data("originCol"));
-
-        slots[newRow][newCol].remove();
-        slots[newRow][newCol] = cube;
-        slots[row][col] = null;
-        cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
-                  top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
-        
-        upgrade(cube);
-        bMoved = true;
-    }
-}
-
-// upgrade the cube by times 2
-function upgrade(cube) {
-    var value = cube.data("value");
-
-    // if do not remove, high number class will take higher priority than low number
-    cube.removeClass("number" + value);  
-
-    // upgrade data
-    value *= 2;
-    cube.data("value", value);
-
-    // upgrade outlook
-    switch (cubeStyle) {
-        case "number":
-            cube.text(value);
-            break;
-        case "symbol":
-            var fileName = "image/" + value + ".png";
-            cube.children().attr("src", fileName);
-            break;
-    }
-
-    // upgrade style
-    cube.addClass("number" + value);
-    cube.addClass("mergedCube");
-
-    // refresh score
-    var score = parseInt($("#score").text());
-    score+= value/initValue;
-    $("#score").html('<h1>' + score + '</h1>');
-
-    // tell moveCubes() the largest upgrade number
-    if(upgradeNumber < value/2/initValue)
-        upgradeNumber = value/2/initValue;
 }
 
 function reviveGame(oneStep) {
@@ -771,63 +740,105 @@ function downgrade(cube) {
     $("#score").html('<h1>' + score + '</h1>');
 }
 
-function keydownHandler (key) {
-    switch (key.which){
-        case 37:
-            moveCubes("Left");
+function setCubeStyle (style) {
+    switch (style) {
+        case "number":
+            // switch from "symbol" to "number"
+            if (cubeStyle != "number") {
+                $(".cube").each(function() {
+                    $(this).html($(this).data("value"));
+                });
+            }
+            // here is a trick, upgrade the number if press it REPEATLY
+            else {
+                if (initValue < 512) {  // there should be some limit
+                    $(".cube").each(function() { // upgrade all cubes
+                        value = $(this).data("value");
+                        // if do not remove, high number class will take higher priority than low number
+                        $(this).removeClass("number" + value);  
+
+                        value *= 2;
+                        $(this).data("value", value);
+                        $(this).text(value);
+                        $(this).addClass("number" + value);
+                    });
+                    initValue *= 2;
+                }
+                // recycle to 1
+                else {
+                    $(".cube").each(function() {
+                        value = $(this).data("value");
+                        $(this).removeClass("number" + value);
+
+                        value /= initValue;
+                        $(this).data("value", value);
+                        $(this).text(value);
+                        $(this).addClass("number" + value);
+                    });
+                    initValue = 1;
+                }
+                // change the menu label
+                $("label[for='radio-style-number']").text(initValue);
+                localStorage.initvalue = initValue;
+            }
             break;
-        case 38:
-            moveCubes("Up");
+        case "symbol":
+            // switch all cubes from number to symbol
+            $(".cube").each(function() {
+                fileName = 'image/' + $(this).data("value") + '.png';
+                $(this).html("<img src=" + fileName + ">");
+            });
             break;
-        case 39:
-            moveCubes("Right");
-            break;
-        case 40:
-            moveCubes("Down");
-            break;
-        case 27: // escape
-            reviveGame(true);   // true mean just rewind one step
-            break;
-        case 36: // home
-            reviveGame(false);   // false mean rewind 10 steps
-            break;
+    }
+    cubeStyle = style;
+    localStorage.cubestyle = style; // remember config in local storage
+
+    if (soundSwitch == "on")
+        document.getElementById('change-sound').play();
+}
+
+function setSoundOnOff (sound) {
+    soundSwitch = sound;
+    localStorage.sound = sound; // remember config in local storage
+
+    if (sound == "on")
+        document.getElementById('change-sound').play();
+}
+
+// put the cube to the right place when window is resized
+function adjustPosition() {
+    for(var row = 0; row < maxRowCol; row++)
+    for(var col = 0; col < maxRowCol; col++) {
+        cube = slots[row][col];
+        if(cube != null) {
+            // reset the cube position
+            cube.css({left: $('.slot').eq(row * maxRowCol + col).position().left,
+                        top: $('.slot').eq(row * maxRowCol + col).position().top});
+        }
     }
 }
 
-var touchstart = {"x":-1, "y":-1}; 
-var bCauseMove;
-function touchHandler(event) {
-    var touch;
-    touch = event.originalEvent.touches[0];
-    switch (event.type) {
-        case 'touchstart':
-            touchstart.x = touch.pageX;
-            touchstart.y = touch.pageY;
-            bCauseMove = false;
-            break;
-        case 'touchmove':
-            var distanceX = Math.abs(touch.pageX-touchstart.x);
-            var distanceY = Math.abs(touch.pageY-touchstart.y);
+function saveProgress() {
+    var count = 0;
+    var cubes = new Array();
+    var cube;
 
-            // bCauseMove mean the user's finger movement not cause any movement yet
-            if (!bCauseMove && (distanceX > 50 || distanceY > 50)) {
-                var direction;
-                if(distanceX > distanceY) { // horizonal
-                    if (touch.pageX > touchstart.x)
-                        direction = "Right";
-                    else
-                        direction = "Left";
-                }
-                else { // vertical
-                    if (touch.pageY > touchstart.y)
-                        direction = "Down";
-                    else
-                        direction = "Up";
-                }
-                moveCubes(direction);
-                bCauseMove = true;
-            }            
-            event.preventDefault();
-            break;
+    for(row=0; row < maxRowCol; row++)
+    for(col=0; col < maxRowCol; col++) {
+        cube = slots[row][col];
+        if (cube != null) {
+            cubes[count] = {
+                "row": row,
+                "col": col,
+                "value": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
+            };
+            count++;
+        }
     }
+
+    // save to difference entries
+    localStorage.setItem("cubes" + maxRowCol, JSON.stringify(cubes));
+    localStorage.setItem("moves" + maxRowCol, JSON.stringify(moves));
+    var score = parseInt($("#score").text());
+    localStorage.setItem("score" + maxRowCol, score);
 }
