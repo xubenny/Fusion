@@ -19,7 +19,8 @@ var cubeStyle;
 var soundSwitch;
 
 var moves;  // store movement used for rewind
-var mainPageAction = "none"; // can be "new game" "revive game" "load game"
+var mainPageAction = "none"; // can be "new game" "revive game" "resume game"
+var sounds; // array store sounds objects
 
 
 $(document).ready(function(){
@@ -42,8 +43,7 @@ $(document).ready(function(){
     // click menu handle sound switch
     $("#menu-handle").click(function() {
         if (soundSwitch == "on")
-            document.getElementById('click-sound').play();
-        
+            sounds['click'].play();
     });
     
     // click difficulty radio button
@@ -56,13 +56,10 @@ $(document).ready(function(){
         else {
             saveProgress(); // save progress to local before leave
             maxRowCol = parseInt($(this).val());
-            localStorage.difficulty = maxRowCol; // remember config in local storage
+            saveToLocal("difficulty", maxRowCol); // remember config in local storage
 
             // start a new game if there is no local storage
-            if(!localStorage.getItem("cubes" + maxRowCol))
-                newGame();
-            else
-                loadGame();
+            loadGame();
         }
         $("#menu-panel" ).panel("close");
     });
@@ -85,6 +82,14 @@ $(document).ready(function(){
     // so I just mark here, and handle it in main-page change event
     $(".game-action-btn").click(function() {
         mainPageAction = $(this).children().text();
+        
+        if(soundIsMute())   // triger the sound if browser does not support audio preload
+            for(i=1; i<32768+1; i*=2) {
+               sounds['upgrade' + i].play();
+               sounds['upgrade' + i].pause();
+           }
+           sounds['change'].play();
+           sounds['change'].pause();
     });
     
     // click score title can earn one step rewind
@@ -94,7 +99,11 @@ $(document).ready(function(){
     });
     
     // save progree before browse is closed or session is expired
-    window.onbeforeunload = saveProgress;
+    // for windows, both beforeunload and unload is work, for iOS, only supprot unload, and pagehide
+    // but iOS can not invoke this any event when the page is close by user, only when page refresh or expired
+    $(window).on('unload', function() {
+        saveProgress();
+    });
     
     // new or revive game when page change from game over page to main page
     $("body").pagecontainer({
@@ -123,6 +132,9 @@ $(document).ready(function(){
                         $(document).on('keydown', keydownHandler);
                     }, 4000);
                     break;
+                case "resume game":
+                    loadGame();
+                    break;
             }
             mainPageAction = "none";
         }
@@ -133,7 +145,7 @@ $(document).ready(function(){
     slots = new Array();
      for(var row = 0; row < 6; row++)
          slots[row] = new Array();
-    
+     
     // retrieve the difficulty config from local storage
     if (localStorage.difficulty) {
         maxRowCol = parseInt(localStorage.difficulty);
@@ -187,12 +199,20 @@ $(document).ready(function(){
     }
     else
         soundSwitch = $("input[name='radio-sound']:checked").val()
+
+    // put all sound objects into a array
+    sounds = new Array();
+    for (i=1; i<32768+1; i*=2)
+        sounds['upgrade' + i] = document.getElementById('upgrade-sound' + i);
+    sounds['click'] = document.getElementById('click-sound');
+    sounds['change'] = document.getElementById('change-sound');
      
+    // can not play background sound in some browse, need further process
+    if (soundIsMute())
+        $("body").pagecontainer("change", "#newload-game-page");
     // retrieve saved progress from local storage
-    if (localStorage.getItem("cubes" + maxRowCol))
-        loadGame();
     else
-        newGame();
+        loadGame();
 }); // end ready
 
 function keydownHandler (key) {
@@ -260,7 +280,7 @@ var bMoved; // for deciding whether create new cube depended on whether some cub
 var upgradeNumber; // for play a upgrade sound
 function moveCubes(direction) {
     bMoved = false;
-    upgradeNumber = 0;
+    upgradeNumber = 1; // 1 mean not move yet
 
     // clear show and merged tag
     for(row=0;row<maxRowCol;row++)
@@ -344,7 +364,7 @@ function moveCubes(direction) {
         }
         // play the sound coresponding to the largest number be upgraded
         if (soundSwitch == "on")
-            document.getElementById('upgrade-sound' + upgradeNumber).play();
+            sounds['upgrade' + upgradeNumber].play();
     }
 }
 
@@ -497,8 +517,12 @@ function upgrade(cube) {
     $("#score").html('<h1>' + score + '</h1>');
 
     // tell moveCubes() the largest upgrade number
-    if(upgradeNumber < value/2/initValue)
-        upgradeNumber = value/2/initValue;
+    if(upgradeNumber < value/initValue)
+        upgradeNumber = value/initValue;
+    
+    // save progress in some mile stone
+    if (value/initValue >= 512)
+        saveProgress();
 }
 
 function gameWillOver() {
@@ -526,18 +550,23 @@ function newGame () {
     createCube();
 
     if (soundSwitch == "on")
-        document.getElementById('change-sound').play();
+        sounds['change'].play();
 }
 
 // load game from cubes which is retrieve from local storage
 function loadGame () {
-    // reset global variable
-    resetVariables();
-
     // restore cubes to corespond position
     var json = localStorage.getItem("cubes" + maxRowCol);
+    if (!json) {
+        newGame();
+        return;
+    }
+    
     var cubes = JSON.parse(json);
     var cube;
+
+    // reset global variable
+    resetVariables();
 
     for(count=0; count<cubes.length; count++) {
         value = cubes[count].value * initValue; // local store is pure value
@@ -571,14 +600,16 @@ function loadGame () {
     
     // restore moves
     json = localStorage.getItem("moves" + maxRowCol);
-    moves = JSON.parse(json);
+    if(json)
+        moves = JSON.parse(json);
     
     // restore score
     var score = localStorage.getItem("score" + maxRowCol);
-    $("#score").html('<h1>' + score + '</h1>');
+    if(score)
+        $("#score").html('<h1>' + score + '</h1>');
 
     if (soundSwitch == "on")
-        document.getElementById('change-sound').play();
+        sounds['change'].play();
 }
 
 function resetVariables() {
@@ -779,7 +810,7 @@ function setCubeStyle (style) {
                 }
                 // change the menu label
                 $("label[for='radio-style-number']").text(initValue);
-                localStorage.initvalue = initValue;
+                saveToLocal("initvalue", initValue);
             }
             break;
         case "symbol":
@@ -791,18 +822,18 @@ function setCubeStyle (style) {
             break;
     }
     cubeStyle = style;
-    localStorage.cubestyle = style; // remember config in local storage
+    saveToLocal("cubestyle", style); // remember config in local storage
 
     if (soundSwitch == "on")
-        document.getElementById('change-sound').play();
+        sounds['change'].play();
 }
 
 function setSoundOnOff (sound) {
     soundSwitch = sound;
-    localStorage.sound = sound; // remember config in local storage
+    saveToLocal("sound", sound); // remember config in local storage
 
     if (sound == "on")
-        document.getElementById('change-sound').play();
+        sounds['change'].play();
 }
 
 // put the cube to the right place when window is resized
@@ -837,8 +868,35 @@ function saveProgress() {
     }
 
     // save to difference entries
-    localStorage.setItem("cubes" + maxRowCol, JSON.stringify(cubes));
-    localStorage.setItem("moves" + maxRowCol, JSON.stringify(moves));
+    saveToLocal("cubes" + maxRowCol, JSON.stringify(cubes));
+    saveToLocal("moves" + maxRowCol, JSON.stringify(moves));
     var score = parseInt($("#score").text());
-    localStorage.setItem("score" + maxRowCol, score);
+    saveToLocal("score" + maxRowCol, score);
+}
+
+var bFailToSave = false;
+function saveToLocal(key, value) {
+    // if already tried to save to local but fail, will not try again
+    if(bFailToSave)
+        return;
+    
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        bFailToSave = true;
+        alert("och! i can't save your progress or config on your device,\n\
+             maybe you are using private browsing mode, or your device memory is full!");
+    }
+}
+
+// if safari version is 601.1(that means iOS 9), sound preload is prohibit
+// but 600.1.4 still work
+function soundIsMute() {
+    var str = navigator.appVersion; 
+    var n = str.search("Safari/");
+    var version = parseInt(str.substr(n+7, 3));
+    
+    if(version > 600)
+        return true;
+    return false;
 }

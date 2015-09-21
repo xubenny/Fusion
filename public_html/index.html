@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <!-- prevent browser show cube as a phone number link, added for wechat build in browser -->
+        <meta name="format-detection" content="telephone=no">
+        
         <title>fusion</title>
 
         <!-- tell iOS sarfari use the icon as a desktop shortcut -->
@@ -22,7 +25,7 @@
         <!-- landscape screen remind -->
         <div id="landscape-wrapper">
             <div id="landscape-icon"><img src="image/landscape.png"></div>
-            <p>rotate device to portrait please</p>
+            <p>Rotate Device to Portrait Please</p>
         </div>
         
         <!--rewinding-->
@@ -104,7 +107,19 @@
             </div>
         </div>
         
-        <audio id="upgrade-sound0" preload="auto" src="sound/upgrade-sound0.mp3"></audio>
+        <!--/////////////// new game or load game page //////////////////////-->
+        <div data-role="page" id="newload-game-page" data-theme="b">
+            <div data-role="main" class="ui-content" id="newload-game-content">
+                <div class="game-action-title"><h1>Welcome to Fusion</h1></div>
+                <div class="game-action-btn">
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">new game</a>
+                </div>
+                <div class="game-action-btn">
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">resume game</a>
+                </div>
+            </div>
+        </div>
+        
         <audio id="upgrade-sound1" preload="auto" src="sound/upgrade-sound1.mp3"></audio>
         <audio id="upgrade-sound2" preload="auto" src="sound/upgrade-sound2.mp3"></audio>
         <audio id="upgrade-sound4" preload="auto" src="sound/upgrade-sound4.mp3"></audio>
@@ -115,6 +130,12 @@
         <audio id="upgrade-sound128" preload="auto" src="sound/upgrade-sound128.mp3"></audio>
         <audio id="upgrade-sound256" preload="auto" src="sound/upgrade-sound256.mp3"></audio>
         <audio id="upgrade-sound512" preload="auto" src="sound/upgrade-sound512.mp3"></audio>
+        <audio id="upgrade-sound1024" preload="auto" src="sound/upgrade-sound1024.mp3"></audio>
+        <audio id="upgrade-sound2048" preload="auto" src="sound/upgrade-sound2048.mp3"></audio>
+        <audio id="upgrade-sound4096" preload="auto" src="sound/upgrade-sound4096.mp3"></audio>
+        <audio id="upgrade-sound8192" preload="auto" src="sound/upgrade-sound8192.mp3"></audio>
+        <audio id="upgrade-sound16384" preload="auto" src="sound/upgrade-sound16384.mp3"></audio>
+        <audio id="upgrade-sound32768" preload="auto" src="sound/upgrade-sound32768.mp3"></audio>
         
         <audio id="click-sound" preload="auto" src="sound/click-sound.mp3"></audio>
         <audio id="change-sound" preload="auto" src="sound/change-sound.mp3"></audio>
