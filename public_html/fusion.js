@@ -21,6 +21,7 @@ var soundSwitch;
 var moves;  // store movement used for rewind
 var mainPageAction = "none"; // can be "new game" "revive game" "resume game"
 var sounds; // array store sounds objects
+var ath;    // add a shortcut to home screen
 
 
 $(document).ready(function(){
@@ -213,6 +214,19 @@ $(document).ready(function(){
     // retrieve saved progress from local storage
     else
         loadGame();
+
+    // prepare to ask user ADD a shortcut TO HOME screen
+//    addToHomescreen.removeSession();     // use this to remove the localStorage variable
+    ath = addToHomescreen({
+//        debug: 'ios',           // activate debug mode in ios emulation
+//        skipFirstVisit: false,	// show at first access
+//        startDelay: 0,          // display the message right away
+//        lifespan: 0,            // do not automatically kill the call out
+//        displayPace: 0,         // do not obey the display pace
+//        privateModeOverride: true,	// show the message in private mode
+//        maxDisplayCount: 0,      // do not obey the max display count
+        autostart: false            // will show tip in moveCubes()
+    });
 }); // end ready
 
 function keydownHandler (key) {
@@ -277,7 +291,7 @@ function touchHandler(event) {
 }
 
 var bMoved; // for deciding whether create new cube depended on whether some cube are moved
-var upgradeNumber; // for play a upgrade sound
+var upgradeNumber; // for play a upgrade sound, will be 1,2,4,8..., 1 mean not any upgrade, 2 mean upgrade from 2 to 4
 function moveCubes(direction) {
     bMoved = false;
     upgradeNumber = 1; // 1 mean not move yet
@@ -365,6 +379,12 @@ function moveCubes(direction) {
         // play the sound coresponding to the largest number be upgraded
         if (soundSwitch == "on")
             sounds['upgrade' + upgradeNumber].play();
+
+        // save progress in some mile stone
+        if (upgradeNumber >= 128) {
+            saveProgress();
+            ath.show(); // ask user Add a shorcut To Home screen (ath) once he reach some point
+        }
     }
 }
 
@@ -519,10 +539,6 @@ function upgrade(cube) {
     // tell moveCubes() the largest upgrade number
     if(upgradeNumber < value/initValue)
         upgradeNumber = value/initValue;
-    
-    // save progress in some mile stone
-    if (value/initValue >= 512)
-        saveProgress();
 }
 
 function gameWillOver() {
@@ -563,6 +579,10 @@ function loadGame () {
     }
     
     var cubes = JSON.parse(json);
+    if (cubes.length == 0) {    // if empty
+        newGame();
+        return;
+    }
     var cube;
 
     // reset global variable
