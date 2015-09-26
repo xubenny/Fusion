@@ -157,20 +157,6 @@ $(document).ready(function(){
      for(var row = 0; row < 6; row++)
          slots[row] = [];
      
-    // download data from remote database if there is no saved data in local
-    // this is the situation when user add a shortcut to desktop, the desktop app can not
-    // access the data of web app, need to download from MySQL
-    if(navigator.standalone == true) {
-        if(!localStorage.cubes4 && !localStorage.cubes5 && !localStorage.cubes6 ) {
-            $.ajax({
-                type: 'POST',
-                url:    'readfromdb.php',
-                success: downloadData,
-                async:   false
-            });          
-        }
-    }
-     
     // retrieve the difficulty config from local storage
     if (localStorage.difficulty) {
         maxRowCol = parseInt(localStorage.difficulty);
@@ -252,34 +238,6 @@ $(document).ready(function(){
         autostart: false            // will show tip in moveCubes()
     });
 }); // end ready
-
-function downloadData (json) {
-    result = JSON.parse(json);
-    // difficulty
-    if (result.difficulty != 0)
-        saveToLocal("difficulty", result.difficulty);
-    // cubeStyle
-    if (result.cubeStyle != 0)
-        saveToLocal("cubestyle", result.cubeStyle);
-    // initValue
-    if (result.initValue != 0)
-        saveToLocal("initvalue", result.initValue);
-    // sound
-    if (result.sound != 0)
-        saveToLocal("sound", result.sound);
-    
-    for(i=4; i<=6; i++) {
-        // score
-        if (result['score' + i] != 0)
-            saveToLocal("score" + i, result['score' + i]);
-        // cubes
-        if (result['cubes' + i] != 0)
-            saveToLocal("cubes" + i, result['cubes' + i]);  // no need to encode as json to store, because cubes already is json format
-        // moves
-        if (result['moves' + i] != 0)
-            saveToLocal("moves" + i, result['moves' + i]);  // no need to encode as json to store, because cubes already is json format
-    }
-}
 
 function enableInput() {
     $(document).on('touchstart', touchHandler);
@@ -991,11 +949,7 @@ function saveProgress() {
 function saveItem (key, value) {
     saveToLocal(key, value);
     
-    // if user is in standalone mode, data will be save to app private zone, 
-    // it will not be flush by clear browser buffer, but if is in browser mode,
-    // should save data to remote MySQL server
-    if(navigator.standalone == false)
-        $.post("savetodb.php", { "key": key, "value": value });
+    // maybe save data to server, refer branch Optimize commit first step in GitHub
 }
 
 var bFailToSaveLocal = false;
