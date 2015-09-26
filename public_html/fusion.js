@@ -57,7 +57,7 @@ $(document).ready(function(){
         else {
             saveProgress(); // save progress to local before leave
             maxRowCol = parseInt($(this).val());
-            saveToLocal("difficulty", maxRowCol); // remember config in local storage
+            saveItem("difficulty", maxRowCol); // remember config in local storage
 
             // start a new game if there is no local storage
             loadGame();
@@ -143,9 +143,22 @@ $(document).ready(function(){
 
     ///////////// initial global constant /////////////
     // initial an 2 dimension slots array, just need once during whole session
-    slots = new Array();
+    slots = [];
      for(var row = 0; row < 6; row++)
-         slots[row] = new Array();
+         slots[row] = [];
+     
+    // download data from remote database if there is no data in local
+    // this is the situation when user and a shortcut to desktop, the desktop app can not
+    // access the data of web app, need to download from MySQL
+    if(!localStorage.uid) {
+        $.ajax({
+            type: 'POST',
+            url:    'readfromdb.php',
+            data:   {'uid': myuid()}, // dont use a var of same name
+            success: downloadData,
+            async:   false
+        });          
+    }
      
     // retrieve the difficulty config from local storage
     if (localStorage.difficulty) {
@@ -202,12 +215,12 @@ $(document).ready(function(){
         soundSwitch = $("input[name='radio-sound']:checked").val()
 
     // put all sound objects into a array
-    sounds = new Array();
+    sounds = [];
     for (i=1; i<32768+1; i*=2)
         sounds['upgrade' + i] = document.getElementById('upgrade-sound' + i);
     sounds['click'] = document.getElementById('click-sound');
     sounds['change'] = document.getElementById('change-sound');
-     
+    
     // can not play background sound in some browse, need further process
     if (soundIsMute())
         $("body").pagecontainer("change", "#newload-game-page");
@@ -229,19 +242,48 @@ $(document).ready(function(){
     });
 }); // end ready
 
+function downloadData (json) {
+    result = JSON.parse(json);
+    // difficulty
+    if (result.difficulty != 0)
+        saveToLocal("difficulty", result.difficulty);
+    // cubeStyle
+    if (result.cubeStyle != 0)
+        saveToLocal("cubestyle", result.cubeStyle);
+    // initValue
+    if (result.initValue != 0)
+        saveToLocal("initvalue", result.initValue);
+    // sound
+    if (result.sound != 0)
+        saveToLocal("sound", result.sound);
+    
+    for(i=4; i<=6; i++) {
+        // score
+        if (result['score' + i] != 0)
+            saveToLocal("score" + i, result['score' + i]);
+        // cubes
+        if (result['cubes' + i] != 0)
+            saveToLocal("cubes" + i, result['cubes' + i]);  // no need to encode as json to store, because cubes already is json format
+        // moves
+        if (result['moves' + i] != 0)
+            saveToLocal("moves" + i, result['moves' + i]);  // no need to encode as json to store, because cubes already is json format
+    }
+}
+
+
 function keydownHandler (key) {
     switch (key.which){
         case 37:
-            moveCubes("Left");
+            moveCubes("left");
             break;
         case 38:
-            moveCubes("Up");
+            moveCubes("up");
             break;
         case 39:
-            moveCubes("Right");
+            moveCubes("right");
             break;
         case 40:
-            moveCubes("Down");
+            moveCubes("down");
             break;
         case 27: // escape
             reviveGame(true);   // true mean just rewind one step
@@ -272,15 +314,15 @@ function touchHandler(event) {
                 var direction;
                 if(distanceX > distanceY) { // horizonal
                     if (touch.pageX > touchstart.x)
-                        direction = "Right";
+                        direction = "right";
                     else
-                        direction = "Left";
+                        direction = "left";
                 }
                 else { // vertical
                     if (touch.pageY > touchstart.y)
-                        direction = "Down";
+                        direction = "down";
                     else
-                        direction = "Up";
+                        direction = "up";
                 }
                 moveCubes(direction);
                 bCauseMove = true;
@@ -309,30 +351,30 @@ function moveCubes(direction) {
             
             // reset status for next move
             // is OK even if there will be not a actual move
+            cube.data("action", "stay"); // only merge cube need to record twin position, so just ignore them
             cube.data("originRow", row);
             cube.data("originCol", col);
-            cube.data("action", "stay");
         }
     }
     
     switch (direction)
     {
-        case "Left":
+        case "left":
             for(var col=1; col<maxRowCol; col++)
                 for(var row=0; row<maxRowCol; row++)
                     moveCube(row, col, direction);
             break;
-        case "Right":
+        case "right":
             for(var col=maxRowCol-2; col>=0; col--)
                 for(var row=0; row<maxRowCol; row++)
                     moveCube(row, col, direction);
             break;
-        case "Up":
+        case "up":
             for(var row=1; row<maxRowCol; row++)
                 for(var col=0; col<maxRowCol; col++)
                     moveCube(row, col, direction);
             break;
-        case "Down":
+        case "down":
             for(var row=maxRowCol-2; row>=0; row--)
                 for(var col=0; col<maxRowCol; col++)
                     moveCube(row, col, direction);
@@ -343,30 +385,50 @@ function moveCubes(direction) {
         createCube();  // should placed before record snapshot
 
         // record the snapshot, for play back
-        var cubes = new Array();
+        var cubes = [];
         for(row=0; row<maxRowCol; row++) {
-            cubes[row] = new Array();
+            cubes[row] = [];
             for(col=0; col<maxRowCol; col++) {
-                cubes[row][col] = null;
                 cube = slots[row][col];
                 
-                if (cube != null) {
-                    cubes[row][col] = {
-                        "action": cube.data("action"),
-                        "originRow": cube.data("originRow"),
-                        "originCol": cube.data("originCol"),
-                        "siblingOriginRow": cube.data("siblingOriginRow"),
-                        "siblingOriginCol": cube.data("siblingOriginCol")
-                    };
+                if (cube == null) {
+                    cubes[row][col] = 0;    // can not use 'null', otherwise fail to post to PHP server
+                    continue;
                 }
-            }
-        }  // end for
+                switch (cube.data("action")){
+                    case "created":
+                        cubes[row][col] = {
+                            "a": "c"    // user abbreviation because they need to be saved in local storage and remote database
+                        }
+                        break;
+                    case "moved":
+                        cubes[row][col] = {
+                            "a": "mv",
+                            "r0": cube.data("originRow"),
+                            "c0": cube.data("originCol")
+                        }
+                        break;
+                    case "merged":
+                        cubes[row][col] = {
+                            "a": "mg",
+                            "r0": cube.data("originRow"),
+                            "c0": cube.data("originCol"),
+                            "tr0": cube.data("twinOriginRow"),
+                            "tc0": cube.data("twinOriginCol")
+                        }
+                        break;
+                    default:
+                        cubes[row][col] = 0;
+                        break;
+                } // end switch
+            } // end for col
+        }  // end for row
 
         // save movements for at most 10 times
         if (moves.length >= 10)
             moves.shift();  // abandon the earliest one
         moves.push({
-            "direction": direction,
+            "dir": direction,
             "cubes": cubes
         });
         
@@ -399,22 +461,22 @@ function moveCube(row, col, direction) {
     var newRow = row;
     var newCol = col;
     switch (direction) {
-        case "Left": 
+        case "left": 
             if(col===0)  // reach border
                 return;
             newCol--; 
             break;
-        case "Right":
+        case "right":
             if(col===maxRowCol-1)
                 return;
             newCol++; 
             break;
-        case "Up":
+        case "up":
             if(row===0)
                 return;
             newRow--; 
             break;
-        case "Down":
+        case "down":
             if(row===maxRowCol-1)
                 return;
             newRow++; 
@@ -444,8 +506,8 @@ function moveCube(row, col, direction) {
     // merge with next cube
     else {
         cube.data("action", "merged"); // record for rewind
-        cube.data("siblingOriginRow", slots[newRow][newCol].data("originRow")); // record the sibling's origin position before kill him
-        cube.data("siblingOriginCol", slots[newRow][newCol].data("originCol"));
+        cube.data("twinOriginRow", slots[newRow][newCol].data("originRow")); // record the twin's origin position before kill him
+        cube.data("twinOriginCol", slots[newRow][newCol].data("originCol"));
 
         slots[newRow][newCol].remove();
         slots[newRow][newCol] = cube;
@@ -589,9 +651,9 @@ function loadGame () {
     resetVariables();
 
     for(count=0; count<cubes.length; count++) {
-        value = cubes[count].value * initValue; // local store is pure value
-        row = cubes[count].row;
-        col = cubes[count].col;
+        value = cubes[count].v * initValue; // local store is pure value
+        row = cubes[count].r;
+        col = cubes[count].c;
 
         // set outlook
         switch (cubeStyle) {
@@ -679,24 +741,24 @@ function reviveGame(oneStep) {
         return;
 
     var move = moves.pop();
-    switch (move.direction)
+    switch (move.dir)
     {
-        case "Left":
+        case "left":
             for(var col=maxRowCol-1; col>=0; col--)
                 for(var row=0; row<maxRowCol; row++)
                     rewindCube(row, col, move.cubes[row][col]);
             break;
-        case "Right":
+        case "right":
             for(var col=0; col<maxRowCol; col++)
                 for(var row=0; row<maxRowCol; row++)
                     rewindCube(row, col, move.cubes[row][col]);
             break;
-        case "Up":
+        case "up":
             for(var row=maxRowCol-1; row>=0; row--)
                 for(var col=0; col<maxRowCol; col++)
                     rewindCube(row, col, move.cubes[row][col]);
             break;
-        case "Down":
+        case "down":
             for(var row=0; row<maxRowCol; row++)
                 for(var col=0; col<maxRowCol; col++)
                     rewindCube(row, col, move.cubes[row][col]);
@@ -712,7 +774,7 @@ function reviveGame(oneStep) {
         }, 400);
 }
 
-function rewindCube(row, col, cubeAction) {
+function rewindCube(row, col, movement) {
 
     var cube = slots[row][col];
 
@@ -720,44 +782,44 @@ function rewindCube(row, col, cubeAction) {
     if (cube === null)
         return;
     
-    // just remove it if it has just been created
-    switch (cubeAction.action) {
-        case "created":
-            cube.remove();
+    
+    switch (movement.a) { // judge by ACTION
+        case "c":   // created
+            cube.remove(); // just remove it if it has just been created
             slots[row][col] = null;
             break;
-        case "moved":
-            var newRow = cubeAction.originRow;
-            var newCol = cubeAction.originCol;
+        case "mv":  // moved
+            var newRow = movement.r0;
+            var newCol = movement.c0;
             slots[newRow][newCol] = cube;
             slots[row][col] = null;
             cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
                       top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
             break;
-        case "merged":
+        case "mg":  //merged
             // move the merger to origin position
-            var newRow = cubeAction.originRow;
-            var newCol = cubeAction.originCol;
+            var newRow = movement.r0;
+            var newCol = movement.c0;
             downgrade(cube);
 
-            // clone the cube which is merged, then move to the sibling origin position
-            var siblingCube = cube.clone();
-            siblingCube.data("value", cube.data("value"));
-            siblingCube.appendTo("#slots");
+            // clone the cube which is merged, then move to the twin origin position
+            var twinCube = cube.clone();
+            twinCube.data("value", cube.data("value"));
+            twinCube.appendTo("#slots");
             
-            var siblingRow = cubeAction.siblingOriginRow;
-            var siblingCol = cubeAction.siblingOriginCol;
+            var twinRow = movement.tr0; // twin origin row
+            var twinCol = movement.tc0; // twin origin col
             
             // move back merger
             slots[newRow][newCol] = cube;
             cube.css({left: $('.slot').eq(newRow * maxRowCol + newCol).position().left,
                       top: $('.slot').eq(newRow * maxRowCol + newCol).position().top});
             
-            // move back sibling
+            // move back twin
             slots[row][col] = null;
-            slots[siblingRow][siblingCol] = siblingCube;
-            siblingCube.css({left: $('.slot').eq(siblingRow * maxRowCol + siblingCol).position().left,
-                      top: $('.slot').eq(siblingRow * maxRowCol + siblingCol).position().top});
+            slots[twinRow][twinCol] = twinCube;
+            twinCube.css({left: $('.slot').eq(twinRow * maxRowCol + twinCol).position().left,
+                      top: $('.slot').eq(twinRow * maxRowCol + twinCol).position().top});
             break;
     }
 
@@ -830,7 +892,7 @@ function setCubeStyle (style) {
                 }
                 // change the menu label
                 $("label[for='radio-style-number']").text(initValue);
-                saveToLocal("initvalue", initValue);
+                saveItem("initvalue", initValue);
             }
             break;
         case "symbol":
@@ -842,7 +904,7 @@ function setCubeStyle (style) {
             break;
     }
     cubeStyle = style;
-    saveToLocal("cubestyle", style); // remember config in local storage
+    saveItem("cubestyle", style); // remember config in local storage
 
     if (soundSwitch == "on")
         sounds['change'].play();
@@ -850,7 +912,7 @@ function setCubeStyle (style) {
 
 function setSoundOnOff (sound) {
     soundSwitch = sound;
-    saveToLocal("sound", sound); // remember config in local storage
+    saveItem("sound", sound); // remember config in local storage
 
     if (sound == "on")
         sounds['change'].play();
@@ -871,7 +933,7 @@ function adjustPosition() {
 
 function saveProgress() {
     var count = 0;
-    var cubes = new Array();
+    var cubes = [];
     var cube;
 
     for(row=0; row < maxRowCol; row++)
@@ -879,34 +941,83 @@ function saveProgress() {
         cube = slots[row][col];
         if (cube != null) {
             cubes[count] = {
-                "row": row,
-                "col": col,
-                "value": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
+                "r": row,
+                "c": col,
+                "v": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
             };
             count++;
         }
     }
 
     // save to difference entries
-    saveToLocal("cubes" + maxRowCol, JSON.stringify(cubes));
-    saveToLocal("moves" + maxRowCol, JSON.stringify(moves));
+    if(cubes.length > 0)
+        saveItem("cubes" + maxRowCol, JSON.stringify(cubes));
+    if(moves.length > 0)
+        saveItem("moves" + maxRowCol, JSON.stringify(moves));
     var score = parseInt($("#score").text());
-    saveToLocal("score" + maxRowCol, score);
+    if(score > 0)
+        saveItem("score" + maxRowCol, score);
 }
 
-var bFailToSave = false;
-function saveToLocal(key, value) {
+function saveItem (key, value) {
+    saveToLocal(key, value);
+    
+    // save to remote MySQL server
+    key += myuid();
+    $.post("savetodb.php", { "key": key, "value": value });
+}
+
+var bFailToSaveLocal = false;
+function saveToLocal (key, value) {
     // if already tried to save to local but fail, will not try again
-    if(bFailToSave)
+    if(bFailToSaveLocal)
         return;
     
+    // save to local storage
     try {
         localStorage.setItem(key, value);
     } catch (e) {
-        bFailToSave = true;
+        bFailToSaveLocal = true;
         alert("och! i can't save your progress or config on your device,\n\
              maybe you are using private browsing mode, or your device memory is full!");
     }
+}
+
+// generate a unique id for each device(in a browser), it will be same for one device all the time
+var uid = 0;
+function myuid() {
+    // already generated in this session
+    if (uid != 0)
+        return uid;
+    
+    // already generated in last session and storage in local storage
+    if (localStorage.getItem("uid")) {
+        uid = localStorage.uid;
+        return uid;
+    }
+    
+    // generate now
+    var navigator_info = window.navigator;
+    var screen_info = window.screen;
+    uid = navigator_info.mimeTypes.length;
+    uid += navigator_info.userAgent.replace(/\D+/g, '');
+    uid += navigator_info.plugins.length;
+    uid += screen_info.height || '';
+    uid += screen_info.width || '';
+    uid += screen_info.pixelDepth || '';
+
+    // save to local storage
+    if(!bFailToSaveLocal) {
+        try {
+            localStorage.setItem("uid", uid);
+        } catch (e) {
+            bFailToSaveLocal = true;
+            alert("och! i can't save your progress or config on your device,\n\
+                 maybe you are using private browsing mode, or your device memory is full!");
+        }
+    }
+    
+    return uid;    
 }
 
 // if safari version is 601.1(that means iOS 9), sound preload is prohibit
