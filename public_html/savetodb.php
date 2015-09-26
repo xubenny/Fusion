@@ -1,5 +1,6 @@
 <?php
     $input_key = filter_input(INPUT_POST, "key");
+    $input_key .= $_SERVER["REMOTE_ADDR"];
     $input_value = filter_input(INPUT_POST, "value");
 
     define("DBHOST", "198.23.57.27");

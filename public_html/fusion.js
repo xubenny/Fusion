@@ -147,17 +147,18 @@ $(document).ready(function(){
      for(var row = 0; row < 6; row++)
          slots[row] = [];
      
-    // download data from remote database if there is no data in local
-    // this is the situation when user and a shortcut to desktop, the desktop app can not
+    // download data from remote database if there is no saved data in local
+    // this is the situation when user add a shortcut to desktop, the desktop app can not
     // access the data of web app, need to download from MySQL
-    if(!localStorage.uid) {
-        $.ajax({
-            type: 'POST',
-            url:    'readfromdb.php',
-            data:   {'uid': myuid()}, // dont use a var of same name
-            success: downloadData,
-            async:   false
-        });          
+    if(navigator.standalone == true) {
+        if(!localStorage.cubes4 && !localStorage.cubes5 && !localStorage.cubes6 ) {
+            $.ajax({
+                type: 'POST',
+                url:    'readfromdb.php',
+                success: downloadData,
+                async:   false
+            });          
+        }
     }
      
     // retrieve the difficulty config from local storage
@@ -443,7 +444,7 @@ function moveCubes(direction) {
             sounds['upgrade' + upgradeNumber].play();
 
         // save progress in some mile stone
-        if (upgradeNumber >= 128) {
+        if (upgradeNumber >= 64) {
             saveProgress();
             ath.show(); // ask user Add a shorcut To Home screen (ath) once he reach some point
         }
@@ -932,6 +933,11 @@ function adjustPosition() {
 }
 
 function saveProgress() {
+    // do not save empty progress
+    var score = parseInt($("#score").text());
+    if(score <= 0)
+        return;
+
     var count = 0;
     var cubes = [];
     var cube;
@@ -950,21 +956,19 @@ function saveProgress() {
     }
 
     // save to difference entries
-    if(cubes.length > 0)
-        saveItem("cubes" + maxRowCol, JSON.stringify(cubes));
-    if(moves.length > 0)
-        saveItem("moves" + maxRowCol, JSON.stringify(moves));
-    var score = parseInt($("#score").text());
-    if(score > 0)
-        saveItem("score" + maxRowCol, score);
+    saveItem("score" + maxRowCol, score);
+    saveItem("cubes" + maxRowCol, JSON.stringify(cubes));
+    saveItem("moves" + maxRowCol, JSON.stringify(moves));
 }
 
 function saveItem (key, value) {
     saveToLocal(key, value);
     
-    // save to remote MySQL server
-    key += myuid();
-    $.post("savetodb.php", { "key": key, "value": value });
+    // if user is in standalone mode, data will be save to app private zone, 
+    // it will not be flush by clear browser buffer, but if is in browser mode,
+    // should save data to remote MySQL server
+    if(navigator.standalone == false)
+        $.post("savetodb.php", { "key": key, "value": value });
 }
 
 var bFailToSaveLocal = false;
@@ -981,43 +985,6 @@ function saveToLocal (key, value) {
         alert("och! i can't save your progress or config on your device,\n\
              maybe you are using private browsing mode, or your device memory is full!");
     }
-}
-
-// generate a unique id for each device(in a browser), it will be same for one device all the time
-var uid = 0;
-function myuid() {
-    // already generated in this session
-    if (uid != 0)
-        return uid;
-    
-    // already generated in last session and storage in local storage
-    if (localStorage.getItem("uid")) {
-        uid = localStorage.uid;
-        return uid;
-    }
-    
-    // generate now
-    var navigator_info = window.navigator;
-    var screen_info = window.screen;
-    uid = navigator_info.mimeTypes.length;
-    uid += navigator_info.userAgent.replace(/\D+/g, '');
-    uid += navigator_info.plugins.length;
-    uid += screen_info.height || '';
-    uid += screen_info.width || '';
-    uid += screen_info.pixelDepth || '';
-
-    // save to local storage
-    if(!bFailToSaveLocal) {
-        try {
-            localStorage.setItem("uid", uid);
-        } catch (e) {
-            bFailToSaveLocal = true;
-            alert("och! i can't save your progress or config on your device,\n\
-                 maybe you are using private browsing mode, or your device memory is full!");
-        }
-    }
-    
-    return uid;    
 }
 
 // if safari version is 601.1(that means iOS 9), sound preload is prohibit
