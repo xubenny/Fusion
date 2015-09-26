@@ -26,9 +26,7 @@ var ath;    // add a shortcut to home screen
 
 $(document).ready(function(){
     ///////////// setup all event handle function /////////////
-    $(document).on('keydown', keydownHandler);
-    $(document).on('touchstart', touchHandler);
-    $(document).on('touchmove', touchHandler);
+    enableInput();
 
     // responsible in Windows
     $(window).resize(adjustPosition);
@@ -45,6 +43,12 @@ $(document).ready(function(){
     $("#menu-handle").click(function() {
         if (soundSwitch == "on")
             sounds['click'].play();
+
+        // turn off user input while panel is open
+        // because we dont want the touch action for menu effect game
+        // another hand, game's event handle will block the swipe to close of panel
+        // while panel is open, the handle button is disable by JM, so dont worry about the click and close situation
+        disableInput();
     });
     
     // click difficulty radio button
@@ -109,57 +113,49 @@ $(document).ready(function(){
     // new or revive game when page change from game over page to main page
     $("body").pagecontainer({
         change: function(event, ui) {
-            if(ui.toPage[0].id != "main-page")
+            if(ui.toPage[0].id != "main-page") {
+                // turn off user input while rewinding cubes
+                disableInput();
                 return;
+            }
 
             switch (mainPageAction) {
                 case "new game":
                     newGame();
+                    enableInput();
                     break;
                 case "revive game":
                     $("#rewind-wrapper").show();
                     // turn off user input while rewinding cubes
-                    $(document).off('touchstart', touchHandler);
-                    $(document).off('touchmove', touchHandler);
-                    $(document).off('keydown', keydownHandler);
+                    disableInput();
 
                     reviveGame(false);  // false mean not only one step, but all
                     
                     // turn on user input after rewinding finish
                     setTimeout( function() {
                         $("#rewind-wrapper").hide();
-                        $(document).on('touchstart', touchHandler);
-                        $(document).on('touchmove', touchHandler);
-                        $(document).on('keydown', keydownHandler);
+                        enableInput();
                     }, 4000);
                     break;
                 case "resume game":
                     loadGame();
+                    enableInput();
                     break;
             }
             mainPageAction = "none";
         }
     });
+    
+    // on panel close, turn on user input again
+    $( "#menu-panel" ).on( "panelclose", function( event, ui ) {
+        enableInput();
+    } );
 
     ///////////// initial global constant /////////////
     // initial an 2 dimension slots array, just need once during whole session
     slots = [];
      for(var row = 0; row < 6; row++)
          slots[row] = [];
-     
-    // download data from remote database if there is no saved data in local
-    // this is the situation when user add a shortcut to desktop, the desktop app can not
-    // access the data of web app, need to download from MySQL
-    if(navigator.standalone == true) {
-        if(!localStorage.cubes4 && !localStorage.cubes5 && !localStorage.cubes6 ) {
-            $.ajax({
-                type: 'POST',
-                url:    'readfromdb.php',
-                success: downloadData,
-                async:   false
-            });          
-        }
-    }
      
     // retrieve the difficulty config from local storage
     if (localStorage.difficulty) {
@@ -243,34 +239,17 @@ $(document).ready(function(){
     });
 }); // end ready
 
-function downloadData (json) {
-    result = JSON.parse(json);
-    // difficulty
-    if (result.difficulty != 0)
-        saveToLocal("difficulty", result.difficulty);
-    // cubeStyle
-    if (result.cubeStyle != 0)
-        saveToLocal("cubestyle", result.cubeStyle);
-    // initValue
-    if (result.initValue != 0)
-        saveToLocal("initvalue", result.initValue);
-    // sound
-    if (result.sound != 0)
-        saveToLocal("sound", result.sound);
-    
-    for(i=4; i<=6; i++) {
-        // score
-        if (result['score' + i] != 0)
-            saveToLocal("score" + i, result['score' + i]);
-        // cubes
-        if (result['cubes' + i] != 0)
-            saveToLocal("cubes" + i, result['cubes' + i]);  // no need to encode as json to store, because cubes already is json format
-        // moves
-        if (result['moves' + i] != 0)
-            saveToLocal("moves" + i, result['moves' + i]);  // no need to encode as json to store, because cubes already is json format
-    }
+function enableInput() {
+    $(document).on('touchstart', touchHandler);
+    $(document).on('touchmove', touchHandler);
+    $(document).on('keydown', keydownHandler);
 }
 
+function disableInput() {
+    $(document).off('touchstart', touchHandler);
+    $(document).off('touchmove', touchHandler);
+    $(document).off('keydown', keydownHandler);
+}
 
 function keydownHandler (key) {
     switch (key.which){
@@ -325,8 +304,14 @@ function touchHandler(event) {
                     else
                         direction = "up";
                 }
-                moveCubes(direction);
-                bCauseMove = true;
+                if(direction == "right" && touchstart.x < 25) { // open the panel menu
+                    $("#menu-panel" ).panel("open");
+                    disableInput();
+                }
+                else {
+                    moveCubes(direction);
+                    bCauseMove = true;
+                }
             }            
             event.preventDefault();
             break;
@@ -964,11 +949,7 @@ function saveProgress() {
 function saveItem (key, value) {
     saveToLocal(key, value);
     
-    // if user is in standalone mode, data will be save to app private zone, 
-    // it will not be flush by clear browser buffer, but if is in browser mode,
-    // should save data to remote MySQL server
-    if(navigator.standalone == false)
-        $.post("savetodb.php", { "key": key, "value": value });
+    // maybe save data to server, refer branch Optimize commit first step in GitHub
 }
 
 var bFailToSaveLocal = false;
