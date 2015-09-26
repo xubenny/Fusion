@@ -26,9 +26,7 @@ var ath;    // add a shortcut to home screen
 
 $(document).ready(function(){
     ///////////// setup all event handle function /////////////
-    $(document).on('keydown', keydownHandler);
-    $(document).on('touchstart', touchHandler);
-    $(document).on('touchmove', touchHandler);
+    enableInput();
 
     // responsible in Windows
     $(window).resize(adjustPosition);
@@ -45,6 +43,12 @@ $(document).ready(function(){
     $("#menu-handle").click(function() {
         if (soundSwitch == "on")
             sounds['click'].play();
+
+        // turn off user input while panel is open
+        // because we dont want the touch action for menu effect game
+        // another hand, game's event handle will block the swipe to close of panel
+        // while panel is open, the handle button is disable by JM, so dont worry about the click and close situation
+        disableInput();
     });
     
     // click difficulty radio button
@@ -109,37 +113,43 @@ $(document).ready(function(){
     // new or revive game when page change from game over page to main page
     $("body").pagecontainer({
         change: function(event, ui) {
-            if(ui.toPage[0].id != "main-page")
+            if(ui.toPage[0].id != "main-page") {
+                // turn off user input while rewinding cubes
+                disableInput();
                 return;
+            }
 
             switch (mainPageAction) {
                 case "new game":
                     newGame();
+                    enableInput();
                     break;
                 case "revive game":
                     $("#rewind-wrapper").show();
                     // turn off user input while rewinding cubes
-                    $(document).off('touchstart', touchHandler);
-                    $(document).off('touchmove', touchHandler);
-                    $(document).off('keydown', keydownHandler);
+                    disableInput();
 
                     reviveGame(false);  // false mean not only one step, but all
                     
                     // turn on user input after rewinding finish
                     setTimeout( function() {
                         $("#rewind-wrapper").hide();
-                        $(document).on('touchstart', touchHandler);
-                        $(document).on('touchmove', touchHandler);
-                        $(document).on('keydown', keydownHandler);
+                        enableInput();
                     }, 4000);
                     break;
                 case "resume game":
                     loadGame();
+                    enableInput();
                     break;
             }
             mainPageAction = "none";
         }
     });
+    
+    // on panel close, turn on user input again
+    $( "#menu-panel" ).on( "panelclose", function( event, ui ) {
+        enableInput();
+    } );
 
     ///////////// initial global constant /////////////
     // initial an 2 dimension slots array, just need once during whole session
@@ -271,6 +281,17 @@ function downloadData (json) {
     }
 }
 
+function enableInput() {
+    $(document).on('touchstart', touchHandler);
+    $(document).on('touchmove', touchHandler);
+    $(document).on('keydown', keydownHandler);
+}
+
+function disableInput() {
+    $(document).off('touchstart', touchHandler);
+    $(document).off('touchmove', touchHandler);
+    $(document).off('keydown', keydownHandler);
+}
 
 function keydownHandler (key) {
     switch (key.which){
@@ -325,8 +346,14 @@ function touchHandler(event) {
                     else
                         direction = "up";
                 }
-                moveCubes(direction);
-                bCauseMove = true;
+                if(direction == "right" && touchstart.x < 25) { // open the panel menu
+                    $("#menu-panel" ).panel("open");
+                    disableInput();
+                }
+                else {
+                    moveCubes(direction);
+                    bCauseMove = true;
+                }
             }            
             event.preventDefault();
             break;
