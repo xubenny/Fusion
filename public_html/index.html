@@ -27,42 +27,46 @@
     </head>
 
     <body>
-        <!-- landscape screen remind -->
+        <!--/////////////// landscape screen remind ///////////////-->
         <div id="landscape-wrapper">
             <div id="landscape-icon"><img src="image/landscape.png"></div>
             <p>Rotate Device to Portrait Please</p>
         </div>
         
-        <!--rewinding-->
+        <!--/////////////// rewinding ///////////////-->
         <div id="rewind-wrapper">
-            <p>rewind 10 steps...</p>
+            <p>Rewind 10 Steps...</p>
         </div>
         
         <!--/////////////// main page: content + panel //////////////////////-->
-        <div data-role="page" class="ui-responsive-panel" id="main-page">
+        <div data-role="page" class="ui-responsive-panel" id="main-page"  data-theme="a">
             <div data-role="main" class="ui-content" id="main-content">
 
                 <!--menu handle should be before title and slots, because it float left side-->
                 <div id="menu-handle">
                     <a href="#menu-panel"><img id="menu-handle-img" src="image/swipe-right.png"></a>
                 </div>
-                
-                <!-- Title and Score -->
-                <div id="header-wrapper">
-                    <img id="game-title" src="image/title.png">
-                    <div id="score-title"><h1>score</h1></div>
-                    <div id="score"><h1>0</h1></div>
-                </div><!--score-->
+
+                <!-- Logo and Score -->
+                <div id="game-logo">
+                    <img src="image/title.png">
+                </div>
+                <div id="score">
+                    <h2>Score</h2>
+                    <h1>0</h1>
+                </div>
 
                 <!-- the content will be dynamic created in js -->
                 <div id="slots-wrapper"><div id="slots"></div></div>
+                
+                <div id="test"></div>
             </div><!-- /main -->
 
             <!--panel should be inside page, like main-->
             <div data-role="panel" data-position="left" data-display="push" id="menu-panel" data-theme="b">
                 <form class="panel-form">
                     <h2>Menu</h2>
-                    <label>difficulty</label>
+                    <label>Difficulty</label>
                         <fieldset data-role="controlgroup" data-type="horizontal">
                             <input type="radio" name="radio-difficulty" id="radio-difficulty-4x4" value="4" checked="checked">
                             <label for="radio-difficulty-4x4">4x4</label>
@@ -72,7 +76,7 @@
                             <label for="radio-difficulty-6x6">6x6</label>
                         </fieldset>
                                                     
-                    <label>style</label>
+                    <label>Style</label>
                         <fieldset data-role="controlgroup" data-type="horizontal">
                             <input type="radio" name="radio-style" id="radio-style-number" value="number" checked="checked">
                             <label for="radio-style-number">2</label>
@@ -80,7 +84,7 @@
                             <label for="radio-style-symbol"><img src="image/symbol.png"></label>
                         </fieldset>
 
-                    <label>sound</label>
+                    <label>Sound</label>
                         <fieldset data-role="controlgroup" data-type="horizontal">
                             <input type="radio" name="radio-sound" id="radio-sound-on" value="on" checked="checked">
                             <label for="radio-sound-on">On</label>
@@ -89,42 +93,106 @@
                         </fieldset>
 
                     <div class="ui-grid-a"></div>
-                    <a href="#" class="ui-btn ui-corner-all">high score</a>
+                    <a id="high-score-btn" class="ui-btn ui-corner-all">High Score</a>
 		</form><!--panel-form-->
             </div><!-- /panel -->
 
         </div><!-- /page -->
         
+        <!--//////////////////////// input name page /////////////////////////-->
+        <div data-role="page" id="input-name-page" data-theme="b">
+            <div data-role="main" class="ui-content">
+                <div class="game-action-title"><h1>Game Over!</h1></div>
+                <div class="game-over-score">
+                    <h3>Score:</h3>
+                    <h2>0</h2>
+                </div>
+                <div class="best-score">
+                    <h3>Best:</h3>
+                    <h2>0</h2>
+                </div>
+                
+                <div id="input-name-frame">
+                    <p>Input Your Name and See Your Rank!</p>
+                    <input type="text" placeholder="Your Name Please" maxlength="15">
+                </div>
+                
+                <div class="game-action-btn">
+                    <a href="#game-over-page" class="ui-btn ui-shadow ui-corner-all">OK</a>
+                </div>
+                <div class="game-action-btn">
+                    <a href="#game-over-page" class="ui-btn ui-shadow ui-corner-all">Later</a>
+                </div>
+            </div>
+        </div>
+
         <!--//////////////////////// game over page /////////////////////////-->
         <div data-role="page" id="game-over-page" data-theme="b">
-            <div data-role="main" class="ui-content" id="game-over-content">
+            <div data-role="main" class="ui-content">
                 <div class="game-action-title"><h1>Game Over!</h1></div>
-                <div id="game-over-score">
-                    <h2>score:</h2>
-                    <h1>0</h1>
+                <div class="game-over-score">
+                    <h3>Score:</h3>
+                    <h2>0</h2>
+                </div>
+                <div class="best-score">
+                    <h3>Best:</h3>
+                    <h2>0</h2>
+                </div>
+                
+                <div class="top-players" id="top-players-in-game-over">
+                    <p>Top Players of <span></span> in the World</p>
+                </div>
+                <div class="my-rank" id="my-rank-in-game-over">
+                </div>
+                
+                <div class="game-action-btn">
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">New Game</a>
                 </div>
                 <div class="game-action-btn">
-                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">revive game</a>
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">Revive</a>
                 </div>
-                <div class="game-action-btn">
-                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">new game</a>
+            </div>
+        </div>
+        
+        <!--//////////////////////// high score page /////////////////////////-->
+        <div data-role="page" id="high-score-page" data-theme="b">
+            <div data-role="main" class="ui-content">
+                <div class="game-action-title"><h1>High Score!</h1></div>
+                <div class="game-over-score">
+                    <h3>Score:</h3>
+                    <h2>0</h2>
+                </div>
+                <div class="best-score">
+                    <h3>Best:</h3>
+                    <h2>0</h2>
+                </div>
+                
+                <div id="top-players-in-high-score" class="top-players">
+                    <p>Top Players of <span></span> in the World</p>
+                </div>
+                <div class="my-rank" id="my-rank-in-high-score">
+                </div>
+                
+                <div class="game-action-btn central-btn">
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">Done</a>
                 </div>
             </div>
         </div>
         
         <!--/////////////// new game or load game page //////////////////////-->
         <div data-role="page" id="newload-game-page" data-theme="b">
-            <div data-role="main" class="ui-content" id="newload-game-content">
+            <div data-role="main" class="ui-content">
                 <div class="game-action-title"><h1>Welcome to Fusion</h1></div>
                 <div class="game-action-btn">
-                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">new game</a>
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">New Game</a>
                 </div>
                 <div class="game-action-btn">
-                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">resume game</a>
+                    <a href="#main-page" class="ui-btn ui-shadow ui-corner-all">Resume</a>
                 </div>
             </div>
         </div>
         
+        <!--/////////////// audio resources //////////////////////-->
         <audio id="upgrade-sound1" preload="auto" src="sound/upgrade-sound1.mp3"></audio>
         <audio id="upgrade-sound2" preload="auto" src="sound/upgrade-sound2.mp3"></audio>
         <audio id="upgrade-sound4" preload="auto" src="sound/upgrade-sound4.mp3"></audio>
@@ -145,7 +213,7 @@
         <audio id="click-sound" preload="auto" src="sound/click-sound.mp3"></audio>
         <audio id="change-sound" preload="auto" src="sound/change-sound.mp3"></audio>
 
-        <!-- reference jQuery and jQuery Mobile JS -->
+        <!--///////////// reference jQuery and jQuery Mobile JS /////////////-->
         <script src="js\jquery\jquery-2.1.4.js"></script>
         <script src="js\jqm\jquery.mobile-1.4.5.min.js"></script>
 

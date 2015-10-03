@@ -12,10 +12,55 @@ and open the template in the editor.
     padding: 0; /* there is padding default，which will cause a gap between the handle and left side edge */
 }
 
+/*/////////////////////// logo and score style ////////////////////////*/
+#game-logo {
+    width: 36vw;
+    margin-top: 3vh;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#game-logo img {
+    max-width:100%;
+}
+/*
+How to draw my game title image:
+1. Create a image with 300*100
+2. Type a text "fusion", font Comic Sans MS, size 100, style Bold, color blue(R63 G157 B212) or orange(R212 G89 B40)
+3. Adjust position, save as title.png
+*/
+
+#score {
+    width: 48vw;
+    display: inline-block;
+    text-align: right;
+    font-size: 1.1em;
+    vertical-align: text-top;
+}
+
+#score h1, #score h2 {
+    display: inline;
+    margin-right: 0.2em;
+}
+
+#score h1 {
+    color: green;
+}
+
+
+/*/////////////////////// menu handle ////////////////////////*/
+
 /* menu handle occupy the whole left side. title and slots will float at its right side */
 #menu-handle {
     height: 100vh;
     float: left;
+}
+
+#menu-handle-img {
+    padding: 0; /* no gap between handle and screen left side*/
+    width: 6vw;
+    margin-top: 36vh; /* vertical middle*/
+    margin-right: 2.5vw;/* reasonable space with slots */
 }
 
 /* How to draw a menu handle image：
@@ -30,56 +75,8 @@ and open the template in the editor.
 9. Save this canvas as swipe-left.png, with transparent.
 */
 
-#menu-handle-img {
-    padding: 0; /* no gap between handle and screen left side*/
-    width: 6vw;
-    margin-top: 36vh; /* vertical middle*/
-    margin-right: 2.5vw;/* reasonable space with slots */
-}
 
-
-#header-wrapper {
-    width: 85vw;
-    margin-top: 3vh;
-    margin-bottom: 2vh;
-    display: inline-block;
-
-    display: -webkit-flex; /* Safari */
-    display: flex;  /* score-title width flexibel fill the middle space between game-title and score */
-}
-
-#game-title {
-    width: 36vw;
-    height: auto;
-}
-/*
-How to draw my game title image:
-1. Create a image with 300*100
-2. Type a text "fusion", font Comic Sans MS, size 100, style Bold, color blue(R63 G157 B212) or orange(R212 G89 B40)
-3. Adjust position, save as title.png
-*/
-
-#score-title {
-    font-size: 3vw;
-    margin-right: 2vw;
-    text-align: right;
-    
-    -webkit-flex: 1;  /* Safari 6.1+ */
-    -ms-flex: 1;  /* IE 10 */    
-    flex: 1;  /* score-title width flexibel fill the middle space between game-title and score */
-}
-
-#score {
-    font-size: 4.5vw;
-    
-    color: green;
-    text-align: right;
-}
-
-#score h1 {
-    margin: 1.5vh 0 1.5vh 0; /*调整上下整体对齐*/
-}
-
+/*/////////////////////// game zone ////////////////////////*/
 #slots-wrapper {
     margin-top: 3vh;
     display: inline-block; /*让游戏区浮在menu-handle右边*/
@@ -164,7 +161,7 @@ How to draw my game title image:
     }
 }
 
-/*//////// panel style ////////*/
+/*/////////////////////// menu panel style ////////////////////////*/
 .panel-form { padding:.8em 1.2em; font-family: Lucida Console, sans-serif;}
 .panel-form h2 { color:#555; margin:0 0 .8em 0; padding-bottom:.5em; border-bottom:1px solid rgba(0,0,0,.1); }
 .panel-form label { display:block; margin-top:1.2em; }
@@ -172,29 +169,131 @@ How to draw my game title image:
 .switch .ui-slider-switch { width: 6.5em !important }
 .ui-grid-a { margin-top:1em; padding-top:.8em; margin-top:1.4em; border-top:1px solid rgba(0,0,0,.1); }
 
-/*//////// game over page style ////////*/
+
+/*/////////////////////// game over page style ////////////////////////*/
 .game-action-title {
     text-align: center;
     height: 5em;
     color: goldenrod;
 }
 
-#game-over-score {
+.game-over-score, .best-score {
     text-align: center;
-    height: 5em;
+    width: 40vw;
+    height: 4em;
+    display: inline-block;
+    overflow: hidden;
 }
 
-#game-over-score h1, #game-over-score h2 {
+.game-over-score {
+    margin-left: 5vw;
+}
+
+.game-over-score h2, .game-over-score h3, .best-score h2, .best-score h3 {
     display: inline;
     margin: 0.2em;
 }
 
-.game-action-btn .ui-btn {
-    font-size: 2em;
-//    color: yellow;
+
+.top-players {
+    width: 80vw;
+    margin: auto auto 0 auto;
+    border-radius: 10px;
+    border: solid 3px gray;
+    text-align: center;
+    padding: 0.2em 0 0.2em 0;
 }
 
-/*//////// revive page style ////////*/
+#top-players-in-high-score {
+    border: solid 3px gray;
+}
+
+/* title */
+.top-players :first-child {
+    color: goldenrod;
+    font-weight: bold;
+}
+
+/* top players */
+.player-item {
+    display: inline-block;
+    height: 6vw;
+    border-bottom: solid 1px gray;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+    overflow:    hidden;
+    line-height: 6vw;
+    font-weight:  bolder;
+}
+
+.player-rank {
+    width: 16vw;
+    color: #FF6600;
+}
+.player-name {
+    width: 40vw;
+    font-style: oblique;
+}
+
+.player-score {
+    width: 20vw;
+}
+
+/* the last line without underline */
+.top-players :nth-last-child(1), :nth-last-child(2), :nth-last-child(3){
+    border-bottom: none;
+}
+
+/* user's record should be highlight' */
+.top-player-highlight {
+    background: #006600;
+    border-top: solid 1px gray;
+    border-bottom: solid 1px gray !important; 
+}
+.player-rank.top-player-highlight {
+    border-left: solid 1px gray;
+    border-radius: 10px 0 0 10px;
+}
+.player-score.top-player-highlight {
+    border-right: solid 1px gray;
+    border-radius: 0 10px 10px 0;
+}
+
+.my-rank {
+    width: 80vw;
+    margin: auto auto 1em auto;
+    text-align: center;
+    padding: 0.2em 0 0.2em 0;
+}
+
+#input-name-frame {
+    width: 75vw;
+    margin: auto auto 1em auto;
+    border-radius: 10px;
+    border: solid 3px gray;
+    text-align: center;
+    padding: 0.2em 1em 1em 1em;
+}
+
+#input-name-frame input {
+    background: lightgray;
+    color: #006600; /* green */
+}
+.game-action-btn {
+    display: inline-block;
+    width: 38vw;
+    margin-left: 5vw;
+}
+
+.game-action-btn .ui-btn {
+    font-size: 1.2em;
+}
+
+.central-btn {
+    margin-left: 25vw;
+}
+
+/*/////////////////////// revive page style ////////////////////////*/
 #rewind-wrapper {
     position: absolute;
     width: 100%;
@@ -214,7 +313,7 @@ How to draw my game title image:
     margin-top: 33vh;
 }
 
-/*/////////// screen landscape remind //////////////*/
+/*///////////////////// screen landscape remind ///////////////////*/
 @media only screen and (orientation : portrait){
 #landscape-wrapper {
     display: none;
@@ -247,9 +346,9 @@ How to draw my game title image:
     color: white;
     text-align: center;
 }
-} /*/// end of screen landscape remind ///*/
+} /*/////// end of screen landscape remind ////////*/
 
-/*/////// adjust iPad in portrait ////////*/
+/*//////////// adjust iPad in portrait /////////////*/
 @media only screen 
 and (min-device-width : 768px) 
 and (max-device-width : 1024px) 
