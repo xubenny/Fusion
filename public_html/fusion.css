@@ -119,20 +119,20 @@ How to draw my game title image:
 .number1 {background: Azure; color: black;}
 .number2 {background: snow; color: black;}
 .number4 {background: papayaWhip; color: black;}
-.number8 {background: LightSalmon; color: white;}
-.number16 {background: SandyBrown; color: white;}
+.number8 {background: #66CCFF; color: white;}
+.number16 {background: #FF99FF; color: white;}
 .number32 {background: coral; color: white;}
 .number64 {background: OrangeRed; color: white;}
 .number128 {background: Gold; color: white;}
-.number256 {background: Khaki; color: white;}
+.number256 {background: #009933; color: white;}
 .number512 {background: Orange; color: white;}
-.number1024 {background: GoldenRod; color: white;}
+.number1024 {background: #3366FF; color: white;}
 .number2048 {background: GoldenRod; color: white;}
-.number4096 {background: DarkGreen; color: white;}
-.number8192 {background: Blue; color: white;}
+.number4096 {background: #003300; color: white;}
+.number8192 {background: #000066; color: white;}
 .number16384 {background: Black; color: white;}
-.number32768 {background: Red; color: white;}
-.number65536 {background: Red; color: white;}
+.number32768 {background: #CC3300; color: white;}
+.number65536 {background: #FF0000; color: white;}
 
 .showCube {
     /* animation when a cube is created */
@@ -204,7 +204,8 @@ How to draw my game title image:
     padding: 0.2em 0 0.2em 0;
 }
 
-#top-players-in-high-score {
+/* if without this repeated style, the high score frame will lost the bottom border, not knowing reason */
+#top-players-in-highscore {
     border: solid 3px gray;
 }
 

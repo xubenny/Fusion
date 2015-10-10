@@ -9,10 +9,13 @@
         <title>fusion</title>
 
         <!-- tell iOS sarfari use the icon as a desktop shortcut -->
-        <link rel="apple-touch-icon" href="image\icon.png" />
+        <link rel="apple-touch-icon" href="image/atom-icon-60x60.png" />
+        <link rel="apple-touch-icon" sizes="76x76" href="image/atom-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="image/atom-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="image/atom-icon-152x152.png">
 
         <!-- reference jQuery Mobile Style Sheet -->
-        <link rel="stylesheet" href="js\jqm\jquery.mobile-1.4.5.min.css">
+        <link rel="stylesheet" href="js/jqm/jquery.mobile-1.4.5.min.css">
 
         <!-- My own Style Sheet -->
         <link rel="stylesheet" href="fusion.css">
@@ -21,7 +24,7 @@
         <link id="6x6style" rel="stylesheet" href="fusion-6x6.css">
     
         <!-- Add to Home Screen -->
-        <link rel="apple-touch-icon-precomposed" href="image/icon.png">
+        <link rel="apple-touch-icon-precomposed" href="image/atom-icon-60x60.png">
         <link rel="stylesheet" href="ath/addtohomescreen.css">
         <script src="ath/addtohomescreen.js"></script>
     </head>
@@ -33,13 +36,13 @@
             <p>Rotate Device to Portrait Please</p>
         </div>
         
-        <!--/////////////// rewinding ///////////////-->
+        <!--/////////////////// rewinding scene ///////////////////-->
         <div id="rewind-wrapper">
             <p>Rewind 10 Steps...</p>
         </div>
         
-        <!--/////////////// main page: content + panel //////////////////////-->
-        <div data-role="page" class="ui-responsive-panel" id="main-page"  data-theme="a">
+        <!--//////////////// main page: content + panel //////////////////////-->
+        <div data-role="page" class="ui-responsive-panel" id="main-page" data-theme="a">
             <div data-role="main" class="ui-content" id="main-content">
 
                 <!--menu handle should be before title and slots, because it float left side-->
@@ -59,7 +62,6 @@
                 <!-- the content will be dynamic created in js -->
                 <div id="slots-wrapper"><div id="slots"></div></div>
                 
-                <div id="test"></div>
             </div><!-- /main -->
 
             <!--panel should be inside page, like main-->
@@ -139,10 +141,10 @@
                     <h2>0</h2>
                 </div>
                 
-                <div class="top-players" id="top-players-in-game-over">
+                <div id="top-players-in-gameover" class="top-players">
                     <p>Top Players of <span></span> in the World</p>
                 </div>
-                <div class="my-rank" id="my-rank-in-game-over">
+                <div class="my-rank" id="my-rank-in-gameover">
                 </div>
                 
                 <div class="game-action-btn">
@@ -167,10 +169,10 @@
                     <h2>0</h2>
                 </div>
                 
-                <div id="top-players-in-high-score" class="top-players">
+                <div id="top-players-in-highscore" class="top-players">
                     <p>Top Players of <span></span> in the World</p>
                 </div>
-                <div class="my-rank" id="my-rank-in-high-score">
+                <div class="my-rank" id="my-rank-in-highscore">
                 </div>
                 
                 <div class="game-action-btn central-btn">
@@ -214,8 +216,8 @@
         <audio id="change-sound" preload="auto" src="sound/change-sound.mp3"></audio>
 
         <!--///////////// reference jQuery and jQuery Mobile JS /////////////-->
-        <script src="js\jquery\jquery-2.1.4.js"></script>
-        <script src="js\jqm\jquery.mobile-1.4.5.min.js"></script>
+        <script src="js/jquery/jquery-2.1.4.js"></script>
+        <script src="js/jqm/jquery.mobile-1.4.5.min.js"></script>
 
         <!-- My own JS -->
         <script src="fusion.js"></script>

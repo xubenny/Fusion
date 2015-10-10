@@ -30,46 +30,37 @@ var soundReady = false;
 
 $(document).ready(function(){
     ///////////// setup all event handle function /////////////
-    enableInput();
+    enableGameInput();
 
     // responsible in Windows
     $(window).resize(adjustPosition);
 
-    // change the arrow when menu has been open or close
-    $("#menu-panel" ).panel({
-        open: function() {$("#menu-handle-img").attr("src", "image/swipe-left.png");}
-    });
-    $("#menu-panel" ).panel({
-        close: function() {$("#menu-handle-img").attr("src", "image/swipe-right.png");}
-    }); 
+    $("#menu-panel" ).on( "panelopen", function( event, ui ) {
+        // turn off user input while panel is open
+        // because we dont want the touch action for menu effect game
+        // another hand, game's event handle will block the swipe to close panel
+        // while panel is open, the handle button is disable by JM, so dont worry about the click and close situation
+        disableGameInput();
+
+        // change the arrow when menu has been open or close
+        $("#menu-handle-img").attr("src", "image/swipe-left.png");
+    } );
+    $("#menu-panel" ).on( "panelclose", function( event, ui ) {
+        // on panel close, turn on user game input again
+        enableGameInput();
+        // change the arrow when menu has been open or close
+        $("#menu-handle-img").attr("src", "image/swipe-right.png");
+    } );
     
     // click menu handle sound switch
     $("#menu-handle").click(function() {
         if (soundSwitch == "on")
             sounds['click'].play();
-
-        // turn off user input while panel is open
-        // because we dont want the touch action for menu effect game
-        // another hand, game's event handle will block the swipe to close of panel
-        // while panel is open, the handle button is disable by JM, so dont worry about the click and close situation
-        disableInput(false);
     });
     
     // click difficulty radio button
     $("input[name='radio-difficulty']").change(function() {
-        // if user press the radio already checked, it mean he want to new game
-        if(maxRowCol == parseInt($(this).val()))
-            newGame();
-        // if user press the radio not checked, 
-        // it mean he want to new game
-        else {
-            saveProgress(); // save progress to local before leave
-            maxRowCol = parseInt($(this).val());
-            saveItem("difficulty", maxRowCol); // remember config in local storage
-
-            // start a new game if there is no local storage
-            loadGame();
-        }
+        setDifficulty(parseInt($(this).val()));
         $("#menu-panel" ).panel("close");
     });
 
@@ -85,43 +76,22 @@ $(document).ready(function(){
         $("#menu-panel" ).panel("close");
     });
 
-    // click new game or revive game button which in page two after game over
-    // or click new game or load game button which in page three after game over
+    // click new game, resume game or revive game button which in other page
     // the style sheet will be not ready if I invoke newGame() here, (the slots position left and top will be -7)
     // so I just mark here, and handle it in main-page change event
     $(".game-action-btn").click(function(event) {
-        mainPageAction = $(this).children().text();
-
-        // triger the sound if browser does not support audio preload
-        if(!soundReady && soundIsMute()) {
-            for(i=1; i<32768+1; i*=2) {
-               sounds['upgrade' + i].play();
-               sounds['upgrade' + i].pause();
-            }
-            sounds['change'].play();
-            sounds['change'].pause();
-            
-            soundReady = true;
-        }
-        
-        // save user name if he click OK in input name page
-        if(mainPageAction == "OK") {
-            var name = $("#input-name-frame input").val();
-            if(name == "")
-               event.preventDefault();
-            else {
-                userName = name;
-                saveItem("username", userName);
-                prepareTopScore("gameover");
-                getTopScores(); // tell my name to server and get latest score list
-            }
-        }
+        gameActionBtnHandler(event, $(this).children().text());
     });
     
-    // click score title can earn one step rewind
-    // it's a trick for mobile phone user
-    $("#score h2").click(function() {
-       reviveGame(true); 
+    // new or revive game when page change from game over page to main page
+    $("body").pagecontainer({ change: function(event, ui) {
+        onPageChange(ui.toPage[0].id);  // pass to page as parameter
+    }});
+    
+    $("#high-score-btn").click(function() {
+        saveBestScore();
+        getTopScoresFor("highscore"); 
+        $("body").pagecontainer("change", "#high-score-page", {changeHash: false});
     });
     
     // save progree before browse is closed or session is expired
@@ -131,54 +101,10 @@ $(document).ready(function(){
         saveProgress();
     });
     
-    // new or revive game when page change from game over page to main page
-    $("body").pagecontainer({
-        change: function(event, ui) {
-            if(ui.toPage[0].id != "main-page") {
-                // turn off user input while rewinding cubes
-                disableInput(true);
-                return;
-            }
-
-            switch (mainPageAction) {
-                case "New Game":
-                    newGame();
-                    enableInput();
-                    break;
-                case "Revive":
-                    $("#rewind-wrapper").show();
-                    // turn off user input while rewinding cubes
-                    disableInput(true);
-
-                    reviveGame(false);  // false mean not only one step, but all
-                    
-                    // turn on user input after rewinding finish
-                    setTimeout( function() {
-                        $("#rewind-wrapper").hide();
-                        enableInput();
-                    }, 4000);
-                    break;
-                case "Resume":
-                    loadGame();
-                    enableInput();
-                    break;
-            }
-            mainPageAction = "none";
-        }
-    });
-    
-    // on panel close, turn on user input again
-    $("#menu-panel" ).on( "panelclose", function( event, ui ) {
-        enableInput();
-    } );
-    
-    $("#high-score-btn").click(function() {
-        saveBestScore();
-        getTopScores(); 
-        setTimeout( function() {
-            prepareTopScore("highscore");
-            $("body").pagecontainer("change", "#high-score-page", {changeHash: false});
-        }, 500);
+    // click score title can earn one step rewind
+    // it's a trick for mobile phone user
+    $("#score h2").click(function() {
+       reviveGame(true); 
     });
     
     ///////////// initial global constant /////////////
@@ -274,24 +200,38 @@ $(document).ready(function(){
     });
 }); // end ready
 
-function enableInput() {
-    $(document).on('touchstart', touchHandler);
-    $(document).off('touchmove', preventBounceHandler);
-    $(document).on('touchmove', touchHandler);
+function enableGameInput() {
+    $(document).off('touchstart touchmove', preventBounceHandler);
+    $(document).on('touchstart touchmove', touchHandler);
+
     $(document).on('keydown', keydownHandler);
 }
 
-function disableInput(prevent) {    // prevent mean whether prevent user scroll the screen
-    $(document).off('touchstart', touchHandler);
-    $(document).off('touchmove', touchHandler);
-    $(document).off('keydown', keydownHandler);
+function disableGameInput() {    // prevent mean whether prevent user scroll the screen
+    $(document).off('touchstart touchmove', touchHandler);
+    $(document).on('touchstart touchmove', preventBounceHandler);
 
-    $(document).on('touchmove', prevent, preventBounceHandler);
+    $(document).off('keydown', keydownHandler);
 }
 
+// if user touch up or down, preventDefault so the browser will not bounce
 function preventBounceHandler (event) {
-    if (event.data == true)
-        event.preventDefault();
+    var touch;
+    touch = event.originalEvent.touches[0];
+    switch (event.type) {
+        case 'touchstart':
+            touchstart.x = touch.pageX;
+            touchstart.y = touch.pageY;
+            break;
+        case 'touchmove':
+            var distanceX = Math.abs(touch.pageX-touchstart.x);
+            var distanceY = Math.abs(touch.pageY-touchstart.y);
+
+            if(distanceX < distanceY) { // vertical
+                event.preventDefault();
+            }
+            break;
+    }
 }
 
 function keydownHandler (key) {
@@ -347,9 +287,9 @@ function touchHandler(event) {
                     else
                         direction = "up";
                 }
+                
                 if(direction == "right" && touchstart.x < 25) { // open the panel menu
                     $("#menu-panel" ).panel("open");
-                    disableInput(false);
                 }
                 else {
                     moveCubes(direction);
@@ -411,7 +351,18 @@ function moveCubes(direction) {
     }
     
     if(bMoved) {
-        createCube();  // should placed before record snapshot
+        // should placed before record snapshot
+        
+        // if there is limit space, then only create smallest cube
+        if ($(".cube").length > $(".slot").length * 2 / 3 ) {
+            createCube(2);  
+        }
+        else if (Math.random() - 0.5 > 0) {
+            createCube(2);
+        }
+        else {
+            createCube(4);
+        }
 
         // record the snapshot, for play back
         var cubes = [];
@@ -466,21 +417,22 @@ function moveCubes(direction) {
             sounds['upgrade' + upgradeNumber].play();
 
         if(gameWillOver()) {
-            disableInput(true);
+            disableGameInput();
             saveBestScore();
 
             // get the latest top player list from server, using asynchronous mode, 
-            // should leave some time before prepareTopScore()
-            getTopScores(); 
+            // there will be 3 cases: 
+            // 1. user name already exist, get top scores and show it
+            // 2. ask user input name but user select Later, get top scores and show it
+            // 3. ask user input name and user did, get top scores again and show it
+            getTopScoresFor("gameover"); 
             if(userName != "[Your Name]") {
                 setTimeout( function() {
-                    prepareTopScore("gameover");
                     $("body").pagecontainer("change", "#game-over-page", {changeHash: false});
                 }, 1000); // should give some time to user before tell him game over
             }
             else {
                 setTimeout( function() {
-                    prepareTopScore("gameover");
                     $("body").pagecontainer("change", "#input-name-page", {changeHash: false});
                 }, 1000);
             }
@@ -494,35 +446,34 @@ function moveCubes(direction) {
 }
 
 var topScores = [];
-function getTopScores() {
+function getTopScoresFor(page) {
     $.ajax({
         type: 'POST',
         url:    'getTopScores.php',
         data: {"name": userName, "uid": myuid(), "difficulty": maxRowCol, "score": bestScore},
         success: function(json) {
             topScores = JSON.parse(json);
+            prepareTopScoresFor(page);
             // for test
 //            $("#test").text(json);
         }
     });
 }
 
-function prepareTopScore(page) {
-    if (page == "gameover") {
-        topPlayers = $("#top-players-in-game-over");
-        myRank = $("#my-rank-in-game-over");
-    }
-    else {
-        topPlayers = $("#top-players-in-high-score");
-        myRank = $("#my-rank-in-high-score");
-    }
+// prepare the content of top player score
+// there is two page: Game Over Page and High Score Page
+function prepareTopScoresFor(page) {
+    var topPlayers = $("#top-players-in-" + page);
+    var myRank = $("#my-rank-in-" + page);
     
     $(".game-over-score h2").text(currentScore);
     $(".best-score h2").text(bestScore);
     $(".top-players p span").text(maxRowCol + "x" + maxRowCol);
     
+    // remove all table cells
     $(".player-item").remove();
     
+    // insert new score one by one
     for (i=0; i<topScores.length-1; i++) {
         topPlayers.append("<p class='player-item player-rank'>" + (i+1) + "</p>");
         topPlayers.append("<p class='player-item player-name'>" + topScores[i].name + "</p>");
@@ -621,7 +572,8 @@ function moveCube(row, col, direction) {
     }
 }
 
-function createCube(){
+function createCube(value){
+    value = value * initValue / 2;
     var cube = null;
     // random a row
     var row = Math.floor(Math.random() * maxRowCol);
@@ -635,15 +587,15 @@ function createCube(){
             {
                 switch (cubeStyle) {
                     case "number":
-                        cube = $("<div class='cube'>" + initValue + "</div>");
+                        cube = $("<div class='cube'>" + value + "</div>");
                         break;
                     case "symbol":
-                        var fileName = 'image/' + initValue + '.png';
+                        var fileName = 'image/' + value + '.png';
                         cube = $("<div class='cube'>" + "<img src=" + fileName + ">" + "</div>");
                         break;
                 }
-                cube.data("value", initValue);
-                cube.addClass("number" + initValue);  //set color and background
+                cube.data("value", value);
+                cube.addClass("number" + value);  //set color and background
                 var slotleft = $('.slot').eq(row * maxRowCol + col).position().left;
                 var slottop = $('.slot').eq(row * maxRowCol + col).position().top;
                 cube.css({left: slotleft, top: slottop});  // set position
@@ -729,7 +681,12 @@ function newGame () {
     resetVariables();
     
     // start a new game
-    createCube();
+    createCube(2);
+    createCube(4);
+    createCube(8);
+    createCube(16);
+    createCube(32);
+    createCube(64);
 
     if (soundSwitch == "on")
         sounds['change'].play();
@@ -965,6 +922,23 @@ function downgrade(cube) {
     $("#score h1").text(currentScore);
 }
 
+function setDifficulty (diff) {
+    // if user press the radio already checked, it mean he want to new game with same dimension
+    if(maxRowCol == diff) {
+        newGame();
+    }
+    // if user press the radio not checked, 
+    // it mean he want to play another dimension game
+    else {
+        saveProgress(); // save progress to local before leave
+        maxRowCol = diff;
+        saveItem("difficulty", maxRowCol); // remember config in local storage
+
+        // load game if there is local storageor record, or start a new game if there not 
+        loadGame();
+    }
+}
+
 function setCubeStyle (style) {
     switch (style) {
         case "number":
@@ -976,7 +950,7 @@ function setCubeStyle (style) {
             }
             // here is a trick, upgrade the number if press it REPEATLY
             else {
-                if (initValue < 512) {  // there should be some limit
+                if (initValue < 64) {  // there should be some limit
                     $(".cube").each(function() { // upgrade all cubes
                         value = $(this).data("value");
                         // if do not remove, high number class will take higher priority than low number
@@ -1028,6 +1002,70 @@ function setSoundOnOff (sound) {
 
     if (sound == "on")
         sounds['change'].play();
+}
+
+function gameActionBtnHandler (event, cmd) {
+    // triger the sound if browser does not support audio preload (iOS 9.0+)
+    if(!soundReady && soundIsMute()) {
+        for(i=1; i<32768+1; i*=2) {
+           sounds['upgrade' + i].play();
+           sounds['upgrade' + i].pause();
+        }
+        sounds['change'].play();
+        sounds['change'].pause();
+
+        soundReady = true;
+    }
+
+    // save user name if he click OK in input name page
+    if(cmd == "OK") {
+        var name = $("#input-name-frame input").val();
+        if(name == "") {
+           event.preventDefault();
+       }
+        else {
+            userName = name;
+            saveItem("username", userName);
+            getTopScoresFor("gameover"); // tell my name to server and get latest score list
+        }
+    }
+    else {
+        // pass a message to page change event what button had been pressed
+        mainPageAction = cmd;
+    }
+}
+
+function onPageChange (toPage) {
+    if(toPage != "main-page") {
+        // turn off user input while not in game page
+        disableGameInput();
+        return;
+    }
+
+    switch (mainPageAction) {
+        case "New Game":
+            newGame();
+            enableGameInput();
+            break;
+        case "Revive":
+            $("#rewind-wrapper").show();
+            // turn off user input while rewinding cubes
+            disableGameInput();
+
+            reviveGame(false);  // false mean not only one step, but all
+
+            // turn on user input after rewinding finish
+            setTimeout( function() {
+                $("#rewind-wrapper").hide();
+                enableGameInput();
+            }, 4000);
+            break;
+        case "Resume":
+            loadGame();
+            enableGameInput();
+            break;
+    }
+    mainPageAction = "none";
 }
 
 // put the cube to the right place when window is resized
