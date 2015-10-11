@@ -1097,7 +1097,7 @@ function saveProgress() {
             cubes[count] = {
                 "r": row,
                 "c": col,
-                "v": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
+                "v": cube.data("value") / initValue    // only save the pure data without effect by enviroment
             };
             count++;
         }
