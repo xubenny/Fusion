@@ -7,6 +7,9 @@ and open the template in the editor.
     Created on : Aug 28, 2015, 4:54:16 PM
     Author     : Benny
 */
+body {
+    overflow:  hidden; /* in IE 11, there will be a horizon scroll bar for body, need to be disabled */
+}
 
 #main-content {
     padding: 0; /* there is padding default，which will cause a gap between the handle and left side edge */

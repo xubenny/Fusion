@@ -354,14 +354,46 @@ function moveCubes(direction) {
         // should placed before record snapshot
         
         // if there is limit space, then only create smallest cube
-        if ($(".cube").length > $(".slot").length * 2 / 3 ) {
-            createCube(2);  
+        var space = $(".slot").length - $(".cube").length;
+        if (space <= maxRowCol ) {
+            space = 0;
         }
-        else if (Math.random() - 0.5 > 0) {
+        var spaceRate = space / (maxRowCol*maxRowCol);
+
+        
+        // for all diff, random create an 2 or 4 cube
+        if (Math.random() > spaceRate) {
             createCube(2);
-        }
-        else {
+        } else {
             createCube(4);
+        }
+
+        // occassionally create an extra cube for 5x5 and 6x6
+        if (maxRowCol > 4) {
+            var r = Math.random();
+            if (r > spaceRate) {  // 2/10 chance
+                // do nothing 1/10 chance
+            } else if (r > spaceRate * 2/3) {   // 4/10 chance
+                createCube(2);
+            } else if (r > spaceRate / 3) {   // 3/10 chance
+                createCube(4);
+            } else {
+                createCube(8);
+            }
+        }
+
+        // occassionally create an extra cube for 6x6
+        if (maxRowCol > 5) {
+            var r = Math.random();
+            if (r > spaceRate) {  // 2/10 chance
+                // do nothing 1/10 chance
+            } else if (r > spaceRate * 2/3) {   // 4/10 chance
+                createCube(4);
+            } else if (r > spaceRate / 3) {   // 3/10 chance
+                createCube(8);
+            } else {
+                createCube(16);
+            }
         }
 
         // record the snapshot, for play back
@@ -1097,7 +1129,7 @@ function saveProgress() {
             cubes[count] = {
                 "r": row,
                 "c": col,
-                "v": cube.data("value") / initValue,    // only save the pure data without effect by enviroment
+                "v": cube.data("value") / initValue    // only save the pure data without effect by enviroment
             };
             count++;
         }
