@@ -82,7 +82,8 @@ How to draw my game title image:
 /*/////////////////////// game zone ////////////////////////*/
 #slots-wrapper {
     margin-top: 3vh;
-    display: inline-block; /*让游戏区浮在menu-handle右边*/
+    display: inline-block; /* float on right side of menu-handle */
+    width: 85vw;    /* fill full screen in landscape mode */
 }
 
 #slots {
@@ -91,8 +92,8 @@ How to draw my game title image:
     
     margin: auto; /* will effect landscape */
 
-    padding-left: 1vw;
-    padding-top: 1vw;
+    padding-left: 0.8%;
+    padding-top: 0.8%;
     border-radius: 5px;
 
     background: gray;
@@ -317,48 +318,22 @@ How to draw my game title image:
     margin-top: 33vh;
 }
 
-/*///////////////////// screen landscape remind ///////////////////*/
-@media only screen and (orientation : portrait){
-#landscape-wrapper {
-    display: none;
-}
-}
-
+/*///////////////////// screen landscape adjust ///////////////////*/
 @media only screen and (orientation : landscape){
-#landscape-wrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 20000;
-    
-    background: black;
-    opacity: 0.85;
+#game-logo {
+    width: 36vh;
+    margin-top: 3vh;
 }
 
-#landscape-icon img {
-    height: 30vh;
+#menu-handle-img {
+    width: 6vh;
+    margin-right: 2.5vh;/* reasonable space with slots */
 }
 
-#landscape-icon {
-    margin-top: 30vh;
-    text-align: center;
-}
-
-#landscape-wrapper p {
-    font-size: 5vh;
-    margin: 0;
-    color: white;
-    text-align: center;
-}
-} /*/////// end of screen landscape remind ////////*/
-
-/*//////////// adjust iPad in portrait /////////////*/
-@media only screen 
-and (min-device-width : 768px) 
-and (max-device-width : 1024px) 
-and (orientation : portrait){
 #slots {
-    height: 83.3vw; /* ipad在缺省的85vw高时下边会比较粗，需要调整细一点 */
+    width: 70vh; /* use viewport width to fullfill responsible page */
+    height: 70vh;
 }
-}
+
+} /*/////// end of screen landscape adjust ////////*/
 
