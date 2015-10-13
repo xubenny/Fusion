@@ -179,6 +179,9 @@ $(document).ready(function(){
     sounds['click'] = document.getElementById('click-sound');
     sounds['change'] = document.getElementById('change-sound');
     
+    // init language (unfinish)
+//    initLanguage();
+    
     // can not play background sound in some browse, need further process
     if (soundIsMute())
         $("body").pagecontainer("change", "#newload-game-page");
@@ -227,7 +230,7 @@ function preventBounceHandler (event) {
             var distanceX = Math.abs(touch.pageX-touchstart.x);
             var distanceY = Math.abs(touch.pageY-touchstart.y);
 
-            if(distanceX < distanceY) { // vertical
+            if(distanceX < distanceY && window.innerHeight > window.innerWidth) { // vertical
                 event.preventDefault();
             }
             break;
@@ -714,11 +717,21 @@ function newGame () {
     
     // start a new game
     createCube(2);
-    createCube(4);
-    createCube(8);
-    createCube(16);
-    createCube(32);
-    createCube(64);
+    
+    if(bestScore > 500)
+        createCube(4);
+    if(bestScore > 1000)
+        createCube(8);
+    if(bestScore > 5000)
+        createCube(16);
+    if(bestScore > 10000)
+        createCube(32);
+    if(bestScore > 20000)
+        createCube(64);
+    if(bestScore > 30000)
+        createCube(128);
+    if(bestScore > 40000)
+        createCube(256);
 
     if (soundSwitch == "on")
         sounds['change'].play();
@@ -957,6 +970,7 @@ function downgrade(cube) {
 function setDifficulty (diff) {
     // if user press the radio already checked, it mean he want to new game with same dimension
     if(maxRowCol == diff) {
+        saveBestScore();
         newGame();
     }
     // if user press the radio not checked, 
@@ -1139,6 +1153,8 @@ function saveProgress() {
     saveItem("score" + maxRowCol, currentScore);
     saveItem("cubes" + maxRowCol, JSON.stringify(cubes));
     saveItem("moves" + maxRowCol, JSON.stringify(moves));
+    
+    saveBestScore();
 }
 
 function saveItem (key, value) {
@@ -1211,3 +1227,14 @@ function myuid() {
     
     return uid;    
 }
+
+//function initLanguage() {
+//    if (navigator.language.toLowerCase() == 'zh-cn') {
+//        $("#score h2").text("得分");
+//        $("#menu-panel h2").text("选项");
+//        $("#menu-panel label").eq(0).text("难度");
+//        $(".panel-form label").eq(4).text("风格");
+//        $(".panel-form label").eq(7).text("音效");
+//        $("#high-score-btn").text("最高记录");
+//    }
+//}
